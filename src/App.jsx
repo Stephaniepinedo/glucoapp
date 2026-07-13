@@ -327,7 +327,6 @@ const ensureSheet = async (fileId) => {
       { values:[HEADER_ROW] }
     );
   } else {
-    // Make sure headers exist (in case sheet was empty)
     try {
       const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
       if (!used.values || used.values.length===0) {
@@ -343,10 +342,80 @@ const ensureSheet = async (fileId) => {
       );
     }
   }
+
+  // Ensure "Configuracion" sheet exists
+  let configSheet = wb.value?.find(s => s.name === "Configuracion");
+  if (!configSheet) {
+    await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Configuracion" });
+    await graphPatch(
+      `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1:B1')`,
+      { values:[["clave","valor"]] }
+    );
+  }
+
+  // Ensure "Alimentos" sheet exists
+  let alimentosSheet = wb.value?.find(s => s.name === "Alimentos");
+  if (!alimentosSheet) {
+    await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Alimentos" });
+    await graphPatch(
+      `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1:B1')`,
+      { values:[["clave","valor"]] }
+    );
+  }
+
   return sheet;
 };
 
-// Read the full "Registros" sheet and convert rows back into record objects
+// Save settings to OneDrive "Configuracion" sheet
+const saveSettingsToOneDrive = async (fileId, settings) => {
+  try {
+    const json = JSON.stringify(settings);
+    // Store as a single row: key="settings", value=JSON
+    await graphPatch(
+      `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A2:B2')`,
+      { values:[["settings", json]] }
+    );
+  } catch {}
+};
+
+// Load settings from OneDrive "Configuracion" sheet
+const loadSettingsFromOneDrive = async (fileId) => {
+  try {
+    const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Configuracion/usedRange`);
+    const rows = used.values || [];
+    for (const row of rows) {
+      if (row[0] === "settings" && row[1]) {
+        return JSON.parse(row[1]);
+      }
+    }
+  } catch {}
+  return null;
+};
+
+// Save custom foods to OneDrive "Alimentos" sheet
+const saveCustomFoodsToOneDrive = async (fileId, foods) => {
+  try {
+    const json = JSON.stringify(foods);
+    await graphPatch(
+      `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A2:B2')`,
+      { values:[["customFoods", json]] }
+    );
+  } catch {}
+};
+
+// Load custom foods from OneDrive "Alimentos" sheet
+const loadCustomFoodsFromOneDrive = async (fileId) => {
+  try {
+    const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Alimentos/usedRange`);
+    const rows = used.values || [];
+    for (const row of rows) {
+      if (row[0] === "customFoods" && row[1]) {
+        return JSON.parse(row[1]);
+      }
+    }
+  } catch {}
+  return null;
+};
 const readAllRecords = async (fileId) => {
   const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
   const rows = used.values || [];
@@ -387,14 +456,13 @@ const appendRow = async (fileId, row) => {
 
 // ── Local cache (best-effort only — NOT the source of truth) ──
 const STORAGE_KEY = "glucoapp-records";
-const cacheRecords = async (recs) => {
-  try { if (window.storage) await window.storage.set(STORAGE_KEY, JSON.stringify(recs)); } catch {}
+const cacheRecords = (recs) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(recs)); } catch {}
 };
-const loadCachedRecords = async () => {
+const loadCachedRecords = () => {
   try {
-    if (!window.storage) return [];
-    const result = await window.storage.get(STORAGE_KEY);
-    return result ? JSON.parse(result.value) : [];
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 };
 
@@ -421,15 +489,14 @@ const dayTotals = (recs) => ({
 });
 
 const CUSTOM_FOODS_KEY = "glucoapp-custom-foods";
-const loadCustomFoods = async () => {
+const loadCustomFoods = () => {
   try {
-    if (!window.storage) return [];
-    const result = await window.storage.get(CUSTOM_FOODS_KEY);
-    return result ? JSON.parse(result.value) : [];
+    const raw = localStorage.getItem(CUSTOM_FOODS_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 };
-const saveCustomFoods = async (foods) => {
-  try { if (window.storage) await window.storage.set(CUSTOM_FOODS_KEY, JSON.stringify(foods)); } catch {}
+const saveCustomFoods = (foods) => {
+  try { localStorage.setItem(CUSTOM_FOODS_KEY, JSON.stringify(foods)); } catch {}
 };
 
 export default function Root() {
@@ -483,8 +550,14 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [scanError, setScanError] = useState("");
   const [xlsxImporting, setXlsxImporting] = useState(false);
   const [xlsxMsg, setXlsxMsg] = useState("");
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`glucoapp-${currentUser}-settings`);
+      return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    } catch { return DEFAULT_SETTINGS; }
+  });
   const [saved, setSaved] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
   const [withToujeo, setWithToujeo] = useState(false);
   const [newMed, setNewMed] = useState("");
   const [syncing, setSyncing] = useState(false);
@@ -495,16 +568,22 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   // odStatus: 'disconnected' | 'connecting' | 'ready' | 'error'
   const [odError, setOdError] = useState("");
   // Load custom foods from local cache on mount (best effort, not source of truth)
+  // Load cached records immediately on mount so historial isn't empty while OneDrive connects
   useEffect(() => {
-    loadCustomFoods().then(data => {
-      setCustomFoods(data);
-      setCustomFoodsReady(true);
-    });
+    const cached = loadCachedRecords();
+    if (cached.length) setRecords(cached);
   }, []);
 
-  // Persist custom foods to local cache whenever they change (best effort)
   useEffect(() => {
-    if (customFoodsReady) saveCustomFoods(customFoods);
+    setCustomFoods(loadCustomFoods());
+    setCustomFoodsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (customFoodsReady) {
+      saveCustomFoods(customFoods);
+      if (fileId && odStatus === "ready") saveCustomFoodsToOneDrive(fileId, customFoods);
+    }
   }, [customFoods, customFoodsReady]);
 
   // Token from OAuth popup is handled by msLogin callback — nothing to read from hash
@@ -527,7 +606,19 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         const recs = await readAllRecords(file.id);
         if (cancelled) return;
         setRecords(recs);
-        cacheRecords(recs); // best-effort local cache as a fallback view only
+        cacheRecords(recs);
+        // Load settings from OneDrive (overrides localStorage)
+        const cloudSettings = await loadSettingsFromOneDrive(file.id);
+        if (cloudSettings) {
+          setSettings(cloudSettings);
+          try { localStorage.setItem(`glucoapp-${currentUser}-settings`, JSON.stringify(cloudSettings)); } catch {}
+        }
+        // Load custom foods from OneDrive (overrides localStorage)
+        const cloudFoods = await loadCustomFoodsFromOneDrive(file.id);
+        if (cloudFoods) {
+          setCustomFoods(cloudFoods);
+          try { localStorage.setItem(CUSTOM_FOODS_KEY, JSON.stringify(cloudFoods)); } catch {}
+        }
         setOdStatus("ready");
         setSyncMsg("✅ Conectado a OneDrive");
         setTimeout(() => setSyncMsg(""), 2500);
@@ -537,7 +628,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         setOdError(String(e?.message || e));
         setSyncMsg("⚠️ Error conectando a OneDrive");
         // Fall back to whatever was cached locally so the user isn't stuck empty-handed
-        loadCachedRecords().then(cached => { if (cached.length) setRecords(cached); });
+        const cached = loadCachedRecords(); if (cached.length) setRecords(cached);
       }
     })();
     return () => { cancelled = true; };
@@ -1462,6 +1553,16 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
                 </button>
               </div>
             </div>
+
+            <button onClick={async ()=>{
+                try { localStorage.setItem(`glucoapp-${currentUser}-settings`, JSON.stringify(settings)); } catch {}
+                if (fileId) await saveSettingsToOneDrive(fileId, settings);
+                setSettingsSaved(true);
+                setTimeout(()=>setSettingsSaved(false), 2500);
+              }}
+              style={{width:"100%",background:settingsSaved?"#16a34a":C.blue,border:"none",color:"white",borderRadius:14,padding:"14px 0",fontSize:16,fontWeight:700,cursor:"pointer",marginBottom:12,transition:"background 0.3s"}}>
+              {settingsSaved ? "✅ Configuración guardada" : "💾 Guardar configuración"}
+            </button>
 
             <div style={{background:C.card,borderRadius:14,padding:14}}>
               <div style={{fontSize:12,color:C.muted,lineHeight:1.7}}>
