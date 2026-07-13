@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 const CLIENT_ID = "56cd2e49-dddb-4dc1-8e66-d9e7b9338f6c";
 const SCOPES = ["User.Read", "Files.ReadWrite", "offline_access"];
-const REDIRECT_URI = window.location.origin;
+const REDIRECT_URI = "https://claude.ai";
 const FILE_NAME = "GlucoApp.xlsx";
 
 // ── Token helpers ──
@@ -35,8 +35,8 @@ const exchangeCodeForToken = async (code) => {
   return data.access_token;
 };
 
-// ── Login Screen — Microsoft only ──
-function AuthScreen({ onLogin }) {
+// ── Login Screen ──
+function AuthScreen() {
   const C2 = { bg:"#f8fafc", card:"#ffffff", border:"#e5e7eb", blue:"#1d4ed8", text:"#111827", muted:"#6b7280" };
 
   const handleMicrosoftLogin = async () => {
@@ -53,7 +53,7 @@ function AuthScreen({ onLogin }) {
   };
 
   return (
-    <div style={{fontFamily:"system-ui,sans-serif",background:"linear-gradient(135deg,#eff6ff,#f8fafc)",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+    <div style={{fontFamily:"system-ui,sans-serif",background:"#eff6ff",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
       <div style={{width:"100%",maxWidth:360}}>
         <div style={{textAlign:"center",marginBottom:36}}>
           <div style={{width:72,height:72,background:"#1d4ed8",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",fontSize:36}}>💉</div>
@@ -61,13 +61,11 @@ function AuthScreen({ onLogin }) {
           <div style={{fontSize:26,fontWeight:700,color:C2.text,marginBottom:6}}>Control Diabetes</div>
           <div style={{fontSize:14,color:C2.muted,lineHeight:1.6}}>Calcula dosis, registra comidas<br/>y mejora cada día</div>
         </div>
-
         <div style={{background:C2.card,borderRadius:20,padding:28,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
-          <div style={{fontSize:15,fontWeight:600,color:C2.text,textAlign:"center",marginBottom:6}}>Bienvenida</div>
+          <div style={{fontSize:15,fontWeight:600,color:C2.text,textAlign:"center",marginBottom:8}}>Bienvenida</div>
           <div style={{fontSize:13,color:C2.muted,textAlign:"center",marginBottom:24,lineHeight:1.6}}>
             Inicia sesión con tu cuenta Microsoft para acceder a tus datos desde cualquier dispositivo
           </div>
-
           <button onClick={handleMicrosoftLogin}
             style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:12,background:"#ffffff",border:"1.5px solid #e5e7eb",borderRadius:14,padding:"14px 0",fontSize:15,fontWeight:600,color:C2.text,cursor:"pointer",boxShadow:"0 1px 3px rgba(0,0,0,0.08)"}}>
             <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -78,13 +76,11 @@ function AuthScreen({ onLogin }) {
             </svg>
             Entrar con Microsoft
           </button>
-
           <div style={{marginTop:20,padding:"12px 14px",background:"#f8fafc",borderRadius:10,fontSize:12,color:C2.muted,lineHeight:1.7,textAlign:"center"}}>
             🔒 Tus datos se guardan en <strong>tu propio OneDrive</strong>.<br/>
             Cada cuenta Microsoft tiene sus datos completamente separados.
           </div>
         </div>
-
         <div style={{textAlign:"center",marginTop:20,fontSize:12,color:C2.muted}}>
           ⚠️ Herramienta de referencia. Confirma las dosis con tu endocrinólogo.
         </div>
@@ -93,13 +89,392 @@ function AuthScreen({ onLogin }) {
   );
 }
 
+const FOODS = [
+  { name: "Arroz", portion: "1/3 taza", carbs: 15, protein: 2, kcal: 67, cat: "Cereales" },
+  { name: "Arroz", portion: "1/2 taza", carbs: 22, protein: 3, kcal: 98, cat: "Cereales" },
+  { name: "Arroz", portion: "1 taza", carbs: 45, protein: 5, kcal: 200, cat: "Cereales" },
+  { name: "Arepa de maíz", portion: "1 unidad CD", carbs: 30, protein: 4, kcal: 180, cat: "Cereales" },
+  { name: "Arepa paisa", portion: "1 unidad delgada", carbs: 15, protein: 2, kcal: 90, cat: "Cereales" },
+  { name: "Pan tajado", portion: "1 tajada", carbs: 15, protein: 3, kcal: 75, cat: "Cereales" },
+  { name: "Pasta", portion: "1/3 taza", carbs: 15, protein: 2, kcal: 70, cat: "Cereales" },
+  { name: "Pasta", portion: "1/2 taza", carbs: 23, protein: 4, kcal: 110, cat: "Cereales" },
+  { name: "Pasta", portion: "1 taza", carbs: 45, protein: 7, kcal: 220, cat: "Cereales" },
+  { name: "Avena cruda", portion: "3 cdas", carbs: 15, protein: 3, kcal: 75, cat: "Cereales" },
+  { name: "Granola", portion: "1/4 taza", carbs: 15, protein: 2, kcal: 110, cat: "Cereales" },
+  { name: "Granola", portion: "1/2 taza", carbs: 30, protein: 4, kcal: 220, cat: "Cereales" },
+  { name: "Empanada", portion: "1 unidad mediana", carbs: 30, protein: 8, kcal: 280, cat: "Cereales" },
+  { name: "Buñuelo", portion: "1 unidad pequeña", carbs: 12, protein: 3, kcal: 120, cat: "Cereales" },
+  { name: "Pandebono", portion: "1 unidad mediana", carbs: 20, protein: 5, kcal: 160, cat: "Cereales" },
+  { name: "Pan de yuca", portion: "1 unidad grande", carbs: 18, protein: 3, kcal: 140, cat: "Cereales" },
+  { name: "Almojábana", portion: "1 unidad mediana", carbs: 22, protein: 5, kcal: 180, cat: "Cereales" },
+  { name: "Pancake", portion: "1 unidad", carbs: 15, protein: 3, kcal: 90, cat: "Cereales" },
+  { name: "Waffle", portion: "1 unidad", carbs: 15, protein: 3, kcal: 95, cat: "Cereales" },
+  { name: "Quinua", portion: "7 cdas", carbs: 15, protein: 4, kcal: 80, cat: "Cereales" },
+  { name: "Papa común", portion: "1 mediana", carbs: 15, protein: 2, kcal: 77, cat: "Tubérculos" },
+  { name: "Papa común", portion: "1 grande", carbs: 30, protein: 4, kcal: 154, cat: "Tubérculos" },
+  { name: "Papa criolla", portion: "1 pequeña", carbs: 5, protein: 1, kcal: 28, cat: "Tubérculos" },
+  { name: "Papa criolla", portion: "3 pequeñas", carbs: 15, protein: 2, kcal: 75, cat: "Tubérculos" },
+  { name: "Papa francesa", portion: "10 unidades", carbs: 15, protein: 2, kcal: 120, cat: "Tubérculos" },
+  { name: "Plátano hartón", portion: "1/4 unidad", carbs: 15, protein: 1, kcal: 65, cat: "Tubérculos" },
+  { name: "Plátano hartón", portion: "1/2 unidad", carbs: 30, protein: 1, kcal: 130, cat: "Tubérculos" },
+  { name: "Guinéo", portion: "1 unidad pequeña", carbs: 15, protein: 1, kcal: 65, cat: "Tubérculos" },
+  { name: "Yuca", portion: "1 astilla pequeña", carbs: 15, protein: 1, kcal: 80, cat: "Tubérculos" },
+  { name: "Ñame", portion: "1 trozo mediano", carbs: 15, protein: 2, kcal: 70, cat: "Tubérculos" },
+  { name: "Banano", portion: "1/2 mediano", carbs: 15, protein: 1, kcal: 60, cat: "Frutas" },
+  { name: "Banano", portion: "1 mediano", carbs: 30, protein: 1, kcal: 120, cat: "Frutas" },
+  { name: "Manzana", portion: "1 pequeña", carbs: 15, protein: 0, kcal: 65, cat: "Frutas" },
+  { name: "Naranja", portion: "1 mediana", carbs: 15, protein: 1, kcal: 60, cat: "Frutas" },
+  { name: "Mango", portion: "1 pequeño", carbs: 15, protein: 1, kcal: 65, cat: "Frutas" },
+  { name: "Papaya", portion: "1 taza picada", carbs: 15, protein: 1, kcal: 55, cat: "Frutas" },
+  { name: "Fresa", portion: "13 unidades", carbs: 15, protein: 1, kcal: 50, cat: "Frutas" },
+  { name: "Aguacate", portion: "1/4 mediano", carbs: 3.5, protein: 1, kcal: 80, cat: "Frutas" },
+  { name: "Melón", portion: "1 taza", carbs: 15, protein: 1, kcal: 55, cat: "Frutas" },
+  { name: "Sandía", portion: "1 tajada", carbs: 15, protein: 1, kcal: 50, cat: "Frutas" },
+  { name: "Mandarina", portion: "1 grande", carbs: 15, protein: 1, kcal: 60, cat: "Frutas" },
+  { name: "Frijol", portion: "1/2 taza", carbs: 15, protein: 7, kcal: 110, cat: "Leguminosas" },
+  { name: "Lenteja", portion: "1/2 taza", carbs: 15, protein: 9, kcal: 115, cat: "Leguminosas" },
+  { name: "Garbanzo", portion: "1/2 taza", carbs: 15, protein: 7, kcal: 115, cat: "Leguminosas" },
+  { name: "Leche entera", portion: "1 vaso 200ml", carbs: 10, protein: 6, kcal: 120, cat: "Lácteos" },
+  { name: "Leche entera", portion: "1/2 vaso 100ml", carbs: 5, protein: 3, kcal: 60, cat: "Lácteos" },
+  { name: "Yogurt finesse", portion: "1 vaso 180ml", carbs: 11, protein: 5, kcal: 90, cat: "Lácteos" },
+  { name: "Carne de res magra", portion: "100g", carbs: 0, protein: 26, kcal: 190, cat: "Carnes" },
+  { name: "Carne de res magra", portion: "150g", carbs: 0, protein: 39, kcal: 285, cat: "Carnes" },
+  { name: "Hígado de res", portion: "100g", carbs: 0, protein: 26, kcal: 135, cat: "Carnes" },
+  { name: "Costilla de res", portion: "100g", carbs: 0, protein: 22, kcal: 250, cat: "Carnes" },
+  { name: "Pechuga de pollo", portion: "100g", carbs: 0, protein: 31, kcal: 165, cat: "Carnes" },
+  { name: "Pechuga de pollo", portion: "150g", carbs: 0, protein: 46, kcal: 248, cat: "Carnes" },
+  { name: "Pierna/muslo pollo", portion: "100g", carbs: 0, protein: 25, kcal: 190, cat: "Carnes" },
+  { name: "Lomo de cerdo", portion: "100g", carbs: 0, protein: 20, kcal: 185, cat: "Carnes" },
+  { name: "Chicharrón asado", portion: "100g", carbs: 0, protein: 30, kcal: 500, cat: "Carnes" },
+  { name: "Huevo entero - Cocido", portion: "1 unidad 50g", carbs: 0.5, protein: 6, kcal: 70, cat: "Carnes" },
+  { name: "Huevo entero - Frito", portion: "1 unidad 50g", carbs: 0.5, protein: 6, kcal: 90, cat: "Carnes" },
+  { name: "Huevo entero - Asado", portion: "1 unidad 50g", carbs: 0.5, protein: 6, kcal: 70, cat: "Carnes" },
+  { name: "Huevo entero - Cocido", portion: "2 unidades 100g", carbs: 1, protein: 12, kcal: 140, cat: "Carnes" },
+  { name: "Huevo entero - Frito", portion: "2 unidades 100g", carbs: 1, protein: 12, kcal: 180, cat: "Carnes" },
+  { name: "Huevo entero - Asado", portion: "2 unidades 100g", carbs: 1, protein: 12, kcal: 140, cat: "Carnes" },
+  { name: "Huevo entero - Cocido", portion: "3 unidades 150g", carbs: 1.5, protein: 18, kcal: 210, cat: "Carnes" },
+  { name: "Huevo entero - Frito", portion: "3 unidades 150g", carbs: 1.5, protein: 18, kcal: 270, cat: "Carnes" },
+  { name: "Huevo entero - Asado", portion: "3 unidades 150g", carbs: 1.5, protein: 18, kcal: 210, cat: "Carnes" },
+  { name: "Clara de huevo - Cocida", portion: "1 clara 33g", carbs: 0.2, protein: 3.5, kcal: 17, cat: "Carnes" },
+  { name: "Clara de huevo - Frita", portion: "1 clara 33g", carbs: 0.2, protein: 3.5, kcal: 25, cat: "Carnes" },
+  { name: "Clara de huevo - Asada", portion: "1 clara 33g", carbs: 0.2, protein: 3.5, kcal: 17, cat: "Carnes" },
+  { name: "Huevo + claras - Cocido", portion: "2 huevos + 3 claras", carbs: 2, protein: 23, kcal: 191, cat: "Carnes" },
+  { name: "Huevo + claras - Frito", portion: "2 huevos + 3 claras", carbs: 2, protein: 23, kcal: 230, cat: "Carnes" },
+  { name: "Huevo + claras - Asado", portion: "2 huevos + 3 claras", carbs: 2, protein: 23, kcal: 191, cat: "Carnes" },
+  { name: "Pechuga de pollo - Asada/plancha", portion: "100g", carbs: 0, protein: 31, kcal: 165, cat: "Carnes" },
+  { name: "Pechuga de pollo - Asada/plancha", portion: "150g", carbs: 0, protein: 46, kcal: 248, cat: "Carnes" },
+  { name: "Pechuga de pollo - Asada/plancha", portion: "200g", carbs: 0, protein: 62, kcal: 330, cat: "Carnes" },
+  { name: "Lomo fino de res - Asado/plancha", portion: "100g", carbs: 0, protein: 29, kcal: 190, cat: "Carnes" },
+  { name: "Lomo fino de res - Asado/plancha", portion: "150g", carbs: 0, protein: 44, kcal: 285, cat: "Carnes" },
+  { name: "Lomo fino de res - Asado/plancha", portion: "200g", carbs: 0, protein: 58, kcal: 380, cat: "Carnes" },
+  { name: "Carne molida magra - Plancha", portion: "100g", carbs: 0, protein: 26, kcal: 220, cat: "Carnes" },
+  { name: "Carne molida magra - Plancha", portion: "150g", carbs: 0, protein: 39, kcal: 330, cat: "Carnes" },
+  { name: "Carne molida magra - Plancha", portion: "200g", carbs: 0, protein: 52, kcal: 440, cat: "Carnes" },
+  { name: "Salmón - Asado/plancha", portion: "100g", carbs: 0, protein: 25, kcal: 206, cat: "Pescados" },
+  { name: "Tilapia - Asada/plancha", portion: "100g", carbs: 0, protein: 26, kcal: 128, cat: "Pescados" },
+  { name: "Camarón - Asado/cocido", portion: "100g", carbs: 0.2, protein: 24, kcal: 99, cat: "Pescados" },
+  { name: "Langosta - Asada/cocida", portion: "100g", carbs: 0, protein: 27, kcal: 128, cat: "Pescados" },
+  { name: "Langostinos - Asados/cocidos", portion: "100g", carbs: 0.2, protein: 24, kcal: 106, cat: "Pescados" },
+  { name: "Mejillones - Cocidos/asados", portion: "100g", carbs: 7, protein: 24, kcal: 172, cat: "Pescados" },
+  { name: "Calamares - Plancha", portion: "100g", carbs: 3, protein: 18, kcal: 92, cat: "Pescados" },
+  { name: "Tilapia roja", portion: "100g", carbs: 0, protein: 26, kcal: 128, cat: "Pescados" },
+  { name: "Trucha arco iris", portion: "100g", carbs: 0, protein: 22, kcal: 148, cat: "Pescados" },
+  { name: "Cachama", portion: "100g", carbs: 0, protein: 18, kcal: 140, cat: "Pescados" },
+  { name: "Bocachico", portion: "100g", carbs: 0, protein: 20, kcal: 110, cat: "Pescados" },
+  { name: "Mojarra", portion: "100g", carbs: 0, protein: 22, kcal: 120, cat: "Pescados" },
+  { name: "Atún enlatado", portion: "100g", carbs: 0, protein: 28, kcal: 130, cat: "Pescados" },
+  { name: "Salmón", portion: "100g", carbs: 0, protein: 20, kcal: 208, cat: "Pescados" },
+  { name: "Verdura", portion: "1/2 taza", carbs: 5, protein: 2, kcal: 25, cat: "Verduras" },
+  { name: "Verdura cruda", portion: "1 taza", carbs: 5, protein: 1, kcal: 20, cat: "Verduras" },
+  { name: "Piña colada", portion: "1 vaso", carbs: 35, protein: 0, kcal: 230, cat: "Bebidas" },
+  { name: "Pan Masa Madre con Proteína", portion: "1 tajada ~50g", carbs: 22.5, protein: 7.1, kcal: 133, cat: "Cereales" },
+  { name: "Pan Masa Madre con Proteína", portion: "2 tajadas 100g", carbs: 45, protein: 14.2, kcal: 266, cat: "Cereales" },
+  { name: "DelOrigen Almendras", portion: "1 unidad 18g", carbs: 4.1, protein: 1.3, kcal: 54, cat: "Personalizados" },
+  { name: "Mini Arepa Yuca Queso DonMaíz", portion: "1 unidad 50g", carbs: 20, protein: 7.5, kcal: 145, cat: "Personalizados" },
+  { name: "DelOrigen Minis", portion: "1 unidad 50g", carbs: 10, protein: 5, kcal: 123, cat: "Personalizados" },
+  { name: "Not Milk", portion: "1 vaso 200ml", carbs: 7.8, protein: 2.8, kcal: 61, cat: "Personalizados" },
+  { name: "Pan de Arroz", portion: "1 tajada 22g", carbs: 12.8, protein: 1.8, kcal: 59, cat: "Personalizados" },
+  { name: "Yogurt Snack Fit Me", portion: "1 vaso 150g", carbs: 9.2, protein: 5.1, kcal: 97, cat: "Lácteos" },
+  { name: "Empanada Maíz Tradición Sierra Flor", portion: "1 unidad 45g", carbs: 8, protein: 3, kcal: 83, cat: "Personalizados" },
+  { name: "Deditos Pakeeto", portion: "1 unidad 43g", carbs: 1.7, protein: 11, kcal: 197, cat: "Personalizados" },
+  { name: "Pan de Bono DelOrigen", portion: "1 unidad 18g", carbs: 5, protein: 1.5, kcal: 45, cat: "Personalizados" },
+  { name: "Chocolate Luker", portion: "1 porción", carbs: 2, protein: 1, kcal: 30, cat: "Personalizados" },
+  { name: "Whey Protein Nutramerican", portion: "1/2 scoop 26g", carbs: 1.2, protein: 20, kcal: 93, cat: "Personalizados" },
+  { name: "Whey Protein Nutramerican", portion: "1 scoop 40g", carbs: 2.4, protein: 40, kcal: 186, cat: "Personalizados" },
+];
+
+const CATS = ["Recientes","Todos","Cereales","Tubérculos","Frutas","Leguminosas","Lácteos","Carnes","Pescados","Verduras","Bebidas","Personalizados"];
+
+const C = {
+  bg:"#f8fafc", card:"#ffffff", border:"#e5e7eb",
+  blue:"#1d4ed8", sky:"#0284c7", green:"#16a34a",
+  red:"#dc2626", yellow:"#d97706", text:"#111827",
+  muted:"#6b7280", purple:"#7c3aed", orange:"#ea580c",
+  headerBg:"#ffffff", headerBorder:"#e5e7eb",
+  inputBg:"#f1f5f9",
+};
+
+const inp = {
+  background:"#f1f5f9", border:"1px solid #e5e7eb", outline:"none",
+  color:"#111827", borderRadius:12, padding:"12px 14px",
+  fontSize:16, width:"100%", boxSizing:"border-box", WebkitAppearance:"none",
+};
+
+const DEFAULT_SETTINGS = {
+  ratios:[
+    { label:"🌅 Mañana", from:"00:00", to:"12:00", ratio:3.5 },
+    { label:"☀️ Tarde", from:"12:00", to:"19:00", ratio:3.5 },
+    { label:"🌙 Noche", from:"19:00", to:"00:00", ratio:3.5 },
+  ],
+  sensitivity:30,
+  // Rangos de glucemia (mg/dL) — 5 niveles
+  hipoglucemia:54,
+  glucemiaBaja:70,
+  objetivo:100,
+  glucemiaAlta:180,
+  hiperglucemia:250,
+  // Datos personales
+  sexo:"Femenino", pesoKg:55, alturaCm:155, fechaNacimiento:"1991-07-01",
+  // Insulina basal
+  toujeoDosis:17,
+  insulinaRapida:"Apidra®",
+  insulinaLenta:"Toujeo®",
+  otrosMedicamentos:["Atorvastatina 10mg","Dapaglifosina"],
+};
+
+const getCurrentRatio = (ratios) => {
+  const now = new Date();
+  const cur = now.getHours()*60 + now.getMinutes();
+  for (const r of ratios) {
+    const [fh,fm] = r.from.split(":").map(Number);
+    const [th,tm] = r.to.split(":").map(Number);
+    const from = fh*60+fm;
+    const to = th===0&&tm===0 ? 24*60 : th*60+tm;
+    if (cur>=from && cur<to) return r.ratio;
+  }
+  return ratios[0].ratio;
+};
+
+const getToken = () => sessionStorage.getItem("ms_token");
+const setToken = (t) => sessionStorage.setItem("ms_token", t);
+const clearToken = () => sessionStorage.removeItem("ms_token");
+
+const msLogin = (onToken) => {
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID, response_type: "token",
+    redirect_uri: REDIRECT_URI, scope: SCOPES.join(" "), response_mode: "fragment",
+  });
+  const loginUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`;
+  const popup = window.open(loginUrl, "mslogin", "width=500,height=650,scrollbars=yes");
+  if (!popup) {
+    alert("El navegador bloqueó la ventana emergente. Permite popups para esta página e intenta de nuevo.");
+    return;
+  }
+  const timer = setInterval(() => {
+    try {
+      const url = popup.location.href;
+      if (url && url.includes("access_token")) {
+        const hash = url.split("#")[1] || "";
+        const token = new URLSearchParams(hash).get("access_token");
+        if (token) {
+          clearInterval(timer);
+          popup.close();
+          setToken(token);
+          if (onToken) onToken(token);
+        }
+      }
+    } catch {
+      // Cross-origin while popup is on Microsoft — normal, keep polling
+    }
+    if (popup.closed) clearInterval(timer);
+  }, 500);
+};
+
+const parseTokenFromHash = () => null; // Handled by popup now
+
+const graphGet = async (url) => {
+  const res = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
+    headers: { Authorization: `Bearer ${getToken()}` }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+};
+
+const graphPost = async (url, body) => {
+  const res = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
+    method:"POST",
+    headers:{ Authorization:`Bearer ${getToken()}`, "Content-Type":"application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+};
+
+const graphPatch = async (url, body) => {
+  const res = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
+    method:"PATCH",
+    headers:{ Authorization:`Bearer ${getToken()}`, "Content-Type":"application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+};
+
+const graphPut = async (url, body, contentType) => {
+  const res = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
+    method:"PUT",
+    headers:{ Authorization:`Bearer ${getToken()}`, "Content-Type": contentType || "application/json" },
+    body,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+};
+
+const HEADER_ROW = ["Fecha","Hora","Glucemia","Carbs","Proteina","Kcal","Insulina","Alimentos","Toujeo"];
+
+// Minimal valid empty .xlsx file, base64-encoded
+const EMPTY_XLSX_BASE64 = "UEsDBBQAAAAIAAAAIQAAAAAAAAAAAAAAAAAVAAAAZG9jUHJvcHMvY29yZS54bWxQSwECFAAUAAAACAAAACEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZG9jUHJvcHMvY29yZS54bWxQSwUGAAAAAAEAAQAjAAAAGwAAAAAA";
+
+const findOrCreateFile = async () => {
+  // Search for an existing GlucoApp.xlsx
+  const data = await graphGet(`/me/drive/root/search(q='${FILE_NAME}')`);
+  let file = data.value?.find(f => f.name === FILE_NAME);
+  if (file) return { file, created:false };
+
+  // Not found — create it via a simple upload of an empty workbook,
+  // then add the "Registros" worksheet with headers.
+  const bin = atob(EMPTY_XLSX_BASE64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  file = await graphPut(
+    `/me/drive/root:/${FILE_NAME}:/content`,
+    bytes,
+    "application/octet-stream"
+  );
+  return { file, created:true };
+};
+
+const ensureSheet = async (fileId) => {
+  const wb = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets`);
+  let sheet = wb.value?.find(s => s.name === "Registros");
+  if (!sheet) {
+    sheet = await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Registros" });
+    await graphPatch(
+      `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A1:I1')`,
+      { values:[HEADER_ROW] }
+    );
+  } else {
+    // Make sure headers exist (in case sheet was empty)
+    try {
+      const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
+      if (!used.values || used.values.length===0) {
+        await graphPatch(
+          `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A1:I1')`,
+          { values:[HEADER_ROW] }
+        );
+      }
+    } catch {
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A1:I1')`,
+        { values:[HEADER_ROW] }
+      );
+    }
+  }
+  return sheet;
+};
+
+// Read the full "Registros" sheet and convert rows back into record objects
+const readAllRecords = async (fileId) => {
+  const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
+  const rows = used.values || [];
+  if (rows.length <= 1) return []; // only header or empty
+  const dataRows = rows.slice(1);
+  return dataRows
+    .filter(r => r[0]) // must have a date
+    .map((r,i) => ({
+      id: `${r[0]}-${r[1]}-${i}`,
+      date: String(r[0]||""),
+      time: String(r[1]||""),
+      glucose: String(r[2]??"-"),
+      carbs: String(r[3]??"0"),
+      protein: String(r[4]??"0"),
+      kcal: String(r[5]??"0"),
+      insulin: Number(r[6])||0,
+      foods: String(r[7]??"-"),
+      toujeo: Number(r[8])||0,
+    }))
+    .reverse(); // most recent first, matching how we display things
+};
+
+const appendRow = async (fileId, row) => {
+  try {
+    await graphPost(
+      `/me/drive/items/${fileId}/workbook/worksheets/Registros/tables/Table1/rows/add`,
+      { values: [row] }
+    );
+  } catch {
+    const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
+    const nextRow = (used.rowCount || 1) + 1;
+    await graphPatch(
+      `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A${nextRow}:I${nextRow}')`,
+      { values: [row] }
+    );
+  }
+};
+
+// ── Local cache (best-effort only — NOT the source of truth) ──
+const STORAGE_KEY = "glucoapp-records";
+const cacheRecords = async (recs) => {
+  try { if (window.storage) await window.storage.set(STORAGE_KEY, JSON.stringify(recs)); } catch {}
+};
+const loadCachedRecords = async () => {
+  try {
+    if (!window.storage) return [];
+    const result = await window.storage.get(STORAGE_KEY);
+    return result ? JSON.parse(result.value) : [];
+  } catch { return []; }
+};
+
+// ── Group records by date ──
+const groupByDate = (records) => {
+  const map = {};
+  for (const r of records) {
+    if (!map[r.date]) map[r.date] = [];
+    map[r.date].push(r);
+  }
+  return Object.entries(map).sort((a,b) => {
+    // parse "DD/MM/YYYY"
+    const parse = (s) => { const [d,m,y] = s.split("/"); return new Date(y,m-1,d); };
+    return parse(b[0]) - parse(a[0]);
+  });
+};
+
+const dayTotals = (recs) => ({
+  carbs:   recs.reduce((s,r) => s + parseFloat(r.carbs  ||0), 0),
+  protein: recs.reduce((s,r) => s + parseFloat(r.protein||0), 0),
+  kcal:    recs.reduce((s,r) => s + parseFloat(r.kcal   ||0), 0),
+  insulin: recs.reduce((s,r) => s + (r.insulin||0), 0),
+  toujeo:  recs.reduce((s,r) => s + (r.toujeo||0), 0),
+});
+
+const CUSTOM_FOODS_KEY = "glucoapp-custom-foods";
+const loadCustomFoods = async () => {
+  try {
+    if (!window.storage) return [];
+    const result = await window.storage.get(CUSTOM_FOODS_KEY);
+    return result ? JSON.parse(result.value) : [];
+  } catch { return []; }
+};
+const saveCustomFoods = async (foods) => {
+  try { if (window.storage) await window.storage.set(CUSTOM_FOODS_KEY, JSON.stringify(foods)); } catch {}
+};
 
 export default function Root() {
-  const [msToken, setMsTokenState] = useState(getToken());
-  const [userInfo, setUserInfo] = useState(null);
+  const [msToken, setMsTokenState] = React.useState(getToken());
+  const [userInfo, setUserInfo] = React.useState(null);
 
   // Handle OAuth PKCE redirect
-  useEffect(() => {
+  React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (code) {
@@ -111,7 +486,7 @@ export default function Root() {
   }, []);
 
   // Get Microsoft user profile
-  useEffect(() => {
+  React.useEffect(() => {
     if (!msToken || userInfo) return;
     fetch("https://graph.microsoft.com/v1.0/me", {
       headers: { Authorization: `Bearer ${msToken}` }
@@ -131,7 +506,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [glucose, setGlucose] = useState("");
   const [foods, setFoods] = useState([]);
   const [recentFoods, setRecentFoods] = useState(() => {
-    return JSON.parse(localStorage.getItem("glucoapp-recent-foods") || "[]");
+    try { return JSON.parse(localStorage.getItem("glucoapp-recent-foods")||"[]"); } catch { return []; }
   });
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("Todos");
@@ -145,7 +520,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [scanError, setScanError] = useState("");
   const [xlsxImporting, setXlsxImporting] = useState(false);
   const [xlsxMsg, setXlsxMsg] = useState("");
-  const [settings, setSettings] = useState(() => { try { const r = localStorage.getItem(`glucoapp-${currentUser}-settings`); return r ? JSON.parse(r) : DEFAULT_SETTINGS; } catch { return DEFAULT_SETTINGS; } });
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [withToujeo, setWithToujeo] = useState(false);
   const [newMed, setNewMed] = useState("");
@@ -156,21 +531,21 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [odStatus, setOdStatus] = useState(msToken ? "connecting" : "disconnected");
   // odStatus: 'disconnected' | 'connecting' | 'ready' | 'error'
   const [odError, setOdError] = useState("");
-  // Load custom foods for this user
+  // Load custom foods from local cache on mount (best effort, not source of truth)
   useEffect(() => {
-    try { const r = localStorage.getItem(`glucoapp-${currentUser}-custom-foods`); if (r) setCustomFoods(JSON.parse(r)); } catch {}
-    setCustomFoodsReady(true);
-  }, [currentUser]);
+    loadCustomFoods().then(data => {
+      setCustomFoods(data);
+      setCustomFoodsReady(true);
+    });
+  }, []);
 
-  // Persist custom foods per user
+  // Persist custom foods to local cache whenever they change (best effort)
   useEffect(() => {
-    if (customFoodsReady) try { localStorage.setItem(`glucoapp-${currentUser}-custom-foods`, JSON.stringify(customFoods)); } catch {}
+    if (customFoodsReady) saveCustomFoods(customFoods);
   }, [customFoods, customFoodsReady]);
 
-  // Persist settings per user whenever they change
-  useEffect(() => {
-    try { localStorage.setItem(`glucoapp-${currentUser}-settings`, JSON.stringify(settings)); } catch {}
-  }, [settings]);
+  // Token from OAuth popup is handled by msLogin callback — nothing to read from hash
+  useEffect(() => {}, []);
 
   // Connect to OneDrive: find/create GlucoApp.xlsx, ensure "Registros" sheet+headers,
   // then download the full history. This is the SOURCE OF TRUTH for records.
@@ -189,7 +564,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         const recs = await readAllRecords(file.id);
         if (cancelled) return;
         setRecords(recs);
-        try { localStorage.setItem(`glucoapp-${currentUser}-records`, JSON.stringify(recs)); } catch {}
+        cacheRecords(recs); // best-effort local cache as a fallback view only
         setOdStatus("ready");
         setSyncMsg("✅ Conectado a OneDrive");
         setTimeout(() => setSyncMsg(""), 2500);
@@ -199,7 +574,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         setOdError(String(e?.message || e));
         setSyncMsg("⚠️ Error conectando a OneDrive");
         // Fall back to whatever was cached locally so the user isn't stuck empty-handed
-        try { const r = localStorage.getItem(`glucoapp-${currentUser}-records`); if (r) { const c = JSON.parse(r); if (c.length) setRecords(c); } } catch {}
+        loadCachedRecords().then(cached => { if (cached.length) setRecords(cached); });
       }
     })();
     return () => { cancelled = true; };
@@ -305,7 +680,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         ? prev.map(r => r.key===key ? {...r,count:r.count+1,last:Date.now()} : r)
         : [...prev, {key,name:f.name,portion:f.portion,carbs:f.carbs,protein:f.protein,kcal:f.kcal,cat:f.cat,count:1,last:Date.now()}];
       const sorted = updated.sort((a,b)=>b.count-a.count||b.last-a.last).slice(0,20);
-      try { localStorage.setItem(`glucoapp-${currentUser}-recent-foods`, JSON.stringify(sorted)); } catch {}
+      try { localStorage.setItem("glucoapp-recent-foods", JSON.stringify(sorted)); } catch {}
       return sorted;
     });
     setFoods(prev => {
@@ -344,7 +719,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         await appendRow(fileId, [r.date,r.time,r.glucose,r.carbs,r.protein,r.kcal,r.insulin,r.foods,r.toujeo]);
         const updated = [r,...records].slice(0,500);
         setRecords(updated);
-        try { localStorage.setItem(`glucoapp-${currentUser}-records`, JSON.stringify(updated)); } catch {}
+        cacheRecords(updated);
         setSyncMsg("✅ Guardado en OneDrive");
         setSyncing(false);
         setTimeout(() => setSyncMsg(""), 2500);
@@ -361,7 +736,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     // Not connected to OneDrive: save to session memory directly (no confirm dialog)
     const updated = [r,...records].slice(0,300);
     setRecords(updated);
-    try { localStorage.setItem(`glucoapp-${currentUser}-records`, JSON.stringify(updated)); } catch {}
+    cacheRecords(updated);
     setSaved(true);
     setTimeout(() => { setGlucose(""); setFoods([]); setWithToujeo(false); setSaved(false); }, 1800);
   };
@@ -434,7 +809,7 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
       // Read file as ArrayBuffer
       const buffer = await file.arrayBuffer();
       // Dynamically import SheetJS from CDN
-      const XLSX = await import('xlsx');
+      const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
       const wb = XLSX.read(buffer, { type:"array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
@@ -528,21 +903,21 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <div style={{fontSize:10,color:C.blue,fontWeight:700,letterSpacing:2}}>GLUCOAPP</div>
-            <div style={{fontSize:17,fontWeight:700,color:C.text}}>Hola, {displayName} 👋</div>
+            <div style={{fontSize:17,fontWeight:700,color:C.text}}>Hola{displayName ? ", "+displayName.split(" ")[0] : ""} 👋</div>
           </div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
             <div style={{background:"#eff6ff",border:"0.5px solid #bfdbfe",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:600,color:C.blue}}>
               Ratio: {currentRatio}g/U
             </div>
-            <div style={{fontSize:10,fontWeight:600,color:odStatus==="ready"||msToken?C.green:odStatus==="connecting"?C.orange:C.muted}}>
-              {(odStatus==="ready"||msToken) && (syncing?"⏳ Guardando...":"☁️ OneDrive conectado")}
-              {odStatus==="connecting" && !msToken && "⏳ Conectando..."}
-              {odStatus==="error" && !msToken && "⚠️ OneDrive sin conexión"}
-              {odStatus==="disconnected" && !msToken && "○ OneDrive desconectado"}
+            <div style={{fontSize:10,fontWeight:600,color:odStatus==="ready"?C.green:odStatus==="connecting"?C.orange:C.muted}}>
+              {odStatus==="ready" && (syncing?"⏳ Guardando...":"☁️ OneDrive conectado")}
+              {odStatus==="connecting" && "⏳ Conectando..."}
+              {odStatus==="error" && "⚠️ OneDrive sin conexión"}
+              {odStatus==="disconnected" && "○ OneDrive desconectado"}
             </div>
           </div>
         </div>
-        {syncMsg && !odError && <div style={{fontSize:11,color:C.blue,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
+        {syncMsg && <div style={{fontSize:11,color:C.blue,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
       </div>
 
       {/* Acumulado del día — siempre visible, en todas las pestañas */}
@@ -946,15 +1321,13 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
           <div style={{padding:16}}>
             <div style={{fontSize:18,fontWeight:700,marginBottom:16}}>⚙️ Configuración</div>
 
-
-
             <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:14}}>
               <div style={{fontSize:12,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>☁️ OneDrive</div>
               {msToken ? (
                 <div>
                   <div style={{fontSize:14,color:C.green,fontWeight:600,marginBottom:8}}>✅ Conectado</div>
                   <div style={{fontSize:12,color:C.muted}}>Los registros se guardan automáticamente en GlucoApp.xlsx</div>
-                  <button onClick={()=>{clearToken();setMsToken(null);setFileId(null);setOdStatus("disconnected");setRecords([]);}}
+                  <button onClick={()=>{clearToken();setMsToken(null);setFileId(null);setOdStatus("disconnected");setRecords([]);onLogout();}}
                     style={{marginTop:12,background:C.red+"20",border:"none",color:C.red,borderRadius:10,padding:"6px 14px",fontSize:12,cursor:"pointer"}}>
                     Desconectar
                   </button>
@@ -962,7 +1335,7 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
               ) : (
                 <div>
                   <div style={{fontSize:14,color:C.muted,marginBottom:12}}>Conecta tu OneDrive para guardar los registros permanentemente</div>
-                  <button onClick={()=>msLogin()} style={{width:"100%",background:C.blue,border:"none",color:"white",borderRadius:12,padding:"12px 0",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                  <button onClick={()=>{ const f = async()=>{ const v=generateCodeVerifier(); const c=await generateCodeChallenge(v); sessionStorage.setItem("pkce_verifier",v); const p=new URLSearchParams({client_id:CLIENT_ID,response_type:"code",redirect_uri:REDIRECT_URI,scope:SCOPES.join(" "),code_challenge:c,code_challenge_method:"S256",response_mode:"query"}); window.location.href=`https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${p}`;}; f(); }} style={{width:"100%",background:C.blue,border:"none",color:"white",borderRadius:12,padding:"12px 0",fontSize:15,fontWeight:700,cursor:"pointer"}}>
                     Conectar OneDrive ☁️
                   </button>
                 </div>
@@ -1132,16 +1505,6 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
                   +
                 </button>
               </div>
-            </div>
-
-            <div style={{background:C.card,borderRadius:14,padding:14,marginBottom:12}}>
-              <div style={{fontSize:12,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:12}}>👤 Sesión</div>
-              <div style={{fontSize:14,color:C.text,marginBottom:4}}><strong>{displayName}</strong></div>
-              <div style={{fontSize:12,color:C.muted,marginBottom:12}}>{currentUser}</div>
-              <button onClick={()=>{clearToken();onLogout();}}
-                style={{width:"100%",background:C.red+"15",border:`1px solid ${C.red}40`,color:C.red,borderRadius:12,padding:"11px 0",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                Cerrar sesión
-              </button>
             </div>
 
             <div style={{background:C.card,borderRadius:14,padding:14}}>
