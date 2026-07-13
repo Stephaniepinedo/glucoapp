@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const CLIENT_ID = "56cd2e49-dddb-4dc1-8e66-d9e7b9338f6c";
 const SCOPES = ["User.Read", "Files.ReadWrite", "offline_access"];
-const REDIRECT_URI = "https://claude.ai";
+const REDIRECT_URI = window.location.origin;
 const FILE_NAME = "GlucoApp.xlsx";
 
 // ── Token helpers ──
@@ -254,43 +254,6 @@ const getCurrentRatio = (ratios) => {
   }
   return ratios[0].ratio;
 };
-
-const getToken = () => sessionStorage.getItem("ms_token");
-const setToken = (t) => sessionStorage.setItem("ms_token", t);
-const clearToken = () => sessionStorage.removeItem("ms_token");
-
-const msLogin = (onToken) => {
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID, response_type: "token",
-    redirect_uri: REDIRECT_URI, scope: SCOPES.join(" "), response_mode: "fragment",
-  });
-  const loginUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`;
-  const popup = window.open(loginUrl, "mslogin", "width=500,height=650,scrollbars=yes");
-  if (!popup) {
-    alert("El navegador bloqueó la ventana emergente. Permite popups para esta página e intenta de nuevo.");
-    return;
-  }
-  const timer = setInterval(() => {
-    try {
-      const url = popup.location.href;
-      if (url && url.includes("access_token")) {
-        const hash = url.split("#")[1] || "";
-        const token = new URLSearchParams(hash).get("access_token");
-        if (token) {
-          clearInterval(timer);
-          popup.close();
-          setToken(token);
-          if (onToken) onToken(token);
-        }
-      }
-    } catch {
-      // Cross-origin while popup is on Microsoft — normal, keep polling
-    }
-    if (popup.closed) clearInterval(timer);
-  }, 500);
-};
-
-const parseTokenFromHash = () => null; // Handled by popup now
 
 const graphGet = async (url) => {
   const res = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
