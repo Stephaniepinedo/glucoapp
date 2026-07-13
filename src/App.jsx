@@ -312,6 +312,27 @@ const saveCustomFoods = async (foods) => {
   try { localStorage.setItem(CUSTOM_FOODS_KEY, JSON.stringify(foods)); } catch {}
 };
 
+// ── Group records by date ──
+const groupByDate = (records) => {
+  const map = {};
+  for (const r of records) {
+    if (!map[r.date]) map[r.date] = [];
+    map[r.date].push(r);
+  }
+  return Object.entries(map).sort((a,b) => {
+    const parse = (s) => { const [d,m,y] = s.split("/"); return new Date(y,m-1,d); };
+    return parse(b[0]) - parse(a[0]);
+  });
+};
+
+const dayTotals = (recs) => ({
+  carbs:   recs.reduce((s,r) => s + parseFloat(r.carbs  ||0), 0),
+  protein: recs.reduce((s,r) => s + parseFloat(r.protein||0), 0),
+  kcal:    recs.reduce((s,r) => s + parseFloat(r.kcal   ||0), 0),
+  insulin: recs.reduce((s,r) => s + (r.insulin||0), 0),
+  toujeo:  recs.reduce((s,r) => s + (r.toujeo||0), 0),
+});
+
 export default function App() {
   const [tab, setTab] = useState("home");
   const [glucose, setGlucose] = useState("");
