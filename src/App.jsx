@@ -5,6 +5,36 @@ const SCOPES = ["User.Read", "Files.ReadWrite", "offline_access"];
 const REDIRECT_URI = window.location.origin;
 const FILE_NAME = "GlucoApp.xlsx";
 
+// ── Token helpers ──
+const getToken = () => localStorage.getItem("ms_token");
+const setToken = (t) => localStorage.setItem("ms_token", t);
+const clearToken = () => localStorage.removeItem("ms_token");
+
+// ── PKCE helpers ──
+const generateCodeVerifier = () => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+};
+const generateCodeChallenge = async (verifier) => {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+};
+const exchangeCodeForToken = async (code) => {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: CLIENT_ID, grant_type: 'authorization_code',
+      code, redirect_uri: REDIRECT_URI, code_verifier: verifier,
+    }),
+  });
+  const data = await res.json();
+  return data.access_token;
+};
+
 // ── Login Screen — Microsoft only ──
 function AuthScreen({ onLogin }) {
   const C2 = { bg:"#f8fafc", card:"#ffffff", border:"#e5e7eb", blue:"#1d4ed8", text:"#111827", muted:"#6b7280" };
