@@ -866,21 +866,27 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <div style={{fontSize:10,color:C.blue,fontWeight:700,letterSpacing:2}}>GLUCOAPP</div>
-            <div style={{fontSize:17,fontWeight:700,color:C.text}}>Hola{displayName ? ", "+displayName.split(" ")[0] : ""} 👋</div>
+            <div style={{fontSize:17,fontWeight:700,color:C.text}}>{displayName && displayName!=="usuario" ? `Hola, ${displayName.split(" ")[0]} 👋` : "Control Diabetes"}</div>
           </div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
             <div style={{background:"#eff6ff",border:"0.5px solid #bfdbfe",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:600,color:C.blue}}>
               Ratio: {currentRatio}g/U
             </div>
-            <div style={{fontSize:10,fontWeight:600,color:odStatus==="ready"?C.green:odStatus==="connecting"?C.orange:C.muted}}>
-              {odStatus==="ready" && (syncing?"⏳ Guardando...":"☁️ OneDrive conectado")}
-              {odStatus==="connecting" && "⏳ Conectando..."}
-              {odStatus==="error" && "⚠️ OneDrive sin conexión"}
-              {odStatus==="disconnected" && "○ OneDrive desconectado"}
+            <div style={{
+              display:"flex", alignItems:"center", gap:5,
+              fontSize:11, fontWeight:600,
+              color: msToken ? C.green : C.muted,
+              background: msToken ? "#f0fdf4" : "#f8fafc",
+              border: `1px solid ${msToken ? "#bbf7d0" : C.border}`,
+              borderRadius:20, padding:"3px 10px"
+            }}>
+              {msToken
+                ? (syncing ? "⏳ Guardando..." : "✅ OneDrive conectado")
+                : "○ OneDrive desconectado"}
             </div>
           </div>
         </div>
-        {syncMsg && odStatus !== "ready" && <div style={{fontSize:11,color:C.red,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
+        {syncMsg && odStatus !== "ready" && odStatus !== "connecting" && <div style={{fontSize:11,color:C.red,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
       </div>
 
       {/* Acumulado del día — siempre visible, en todas las pestañas */}
