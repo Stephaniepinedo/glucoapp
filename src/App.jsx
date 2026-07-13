@@ -119,7 +119,6 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [saved, setSaved] = useState(false);
   const [withToujeo, setWithToujeo] = useState(false);
   const [newMed, setNewMed] = useState("");
-  const [msToken, setMsToken] = useState(getToken());
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const [fileId, setFileId] = useState(null);
