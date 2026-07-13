@@ -672,7 +672,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
       kcal:    totalKcal.toFixed(0),
       insulin: result.total,
       ratio:   result.ratio,
-      foods:   foods.map(f=>`${f.name} x${f.qty}`).join(", ")||"-",
+      foods:   foods.map(f=>`${f.name} (${f.portion}) x${f.qty}`).join(", ")||"-",
       toujeo:  withToujeo ? settings.toujeoDosis : 0,
     };
 
@@ -880,7 +880,7 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
             </div>
           </div>
         </div>
-        {syncMsg && <div style={{fontSize:11,color:C.blue,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
+        {syncMsg && odStatus !== "ready" && <div style={{fontSize:11,color:C.red,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
       </div>
 
       {/* Acumulado del día — siempre visible, en todas las pestañas */}
