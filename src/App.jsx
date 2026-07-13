@@ -146,18 +146,46 @@ const getToken = () => localStorage.getItem("ms_token");
 const setToken = (t) => localStorage.setItem("ms_token", t);
 const clearToken = () => localStorage.removeItem("ms_token");
 
-const msLogin = () => {
+// PKCE helpers
+const generateCodeVerifier = () => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return btoa(String.fromCharCode(...array)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+};
+const generateCodeChallenge = async (verifier) => {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+};
+
+const msLogin = async () => {
+  const verifier = generateCodeVerifier();
+  const challenge = await generateCodeChallenge(verifier);
+  sessionStorage.setItem('pkce_verifier', verifier);
   const params = new URLSearchParams({
-    client_id: CLIENT_ID, response_type: "token",
-    redirect_uri: REDIRECT_URI, scope: SCOPES.join(" "), response_mode: "fragment",
+    client_id: CLIENT_ID, response_type: "code",
+    redirect_uri: REDIRECT_URI, scope: SCOPES.join(" "),
+    code_challenge: challenge, code_challenge_method: "S256",
+    response_mode: "query",
   });
   window.location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`;
 };
 
-const parseTokenFromHash = () => {
-  const hash = window.location.hash.substring(1);
-  return new URLSearchParams(hash).get("access_token");
+const exchangeCodeForToken = async (code) => {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  const res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: CLIENT_ID, grant_type: 'authorization_code',
+      code, redirect_uri: REDIRECT_URI, code_verifier: verifier,
+    }),
+  });
+  const data = await res.json();
+  return data.access_token;
 };
+
+const parseTokenFromHash = () => null; // Not used with PKCE
 
 const graphGet = async (url) => {
   const res = await fetch(`https://graph.microsoft.com/v1.0${url}`, {
@@ -377,14 +405,19 @@ export default function App() {
     if (customFoodsReady) saveCustomFoods(customFoods);
   }, [customFoods, customFoodsReady]);
 
-  // Token from OAuth redirect — parse from URL hash after Microsoft login
+  // Token from OAuth PKCE redirect — exchange code for token
   useEffect(() => {
-    const token = parseTokenFromHash();
-    if (token) {
-      setToken(token);
-      setMsToken(token);
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
       window.history.replaceState({}, "", window.location.pathname);
-      setOdStatus("connecting");
+      exchangeCodeForToken(code).then(token => {
+        if (token) {
+          setToken(token);
+          setMsToken(token);
+          setOdStatus("connecting");
+        }
+      }).catch(() => setOdStatus("error"));
     }
   }, []);
 
@@ -1176,7 +1209,7 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
               ) : (
                 <div>
                   <div style={{fontSize:14,color:C.muted,marginBottom:12}}>Conecta tu OneDrive para guardar los registros permanentemente</div>
-                  <button onClick={msLogin} style={{width:"100%",background:C.blue,border:"none",color:"white",borderRadius:12,padding:"12px 0",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+                  <button onClick={()=>msLogin()} style={{width:"100%",background:C.blue,border:"none",color:"white",borderRadius:12,padding:"12px 0",fontSize:15,fontWeight:700,cursor:"pointer"}}>
                     Conectar OneDrive ☁️
                   </button>
                 </div>
