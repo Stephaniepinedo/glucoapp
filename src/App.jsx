@@ -872,21 +872,8 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
             <div style={{background:"#eff6ff",border:"0.5px solid #bfdbfe",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:600,color:C.blue}}>
               Ratio: {currentRatio}g/U
             </div>
-            <div style={{
-              display:"flex", alignItems:"center", gap:5,
-              fontSize:11, fontWeight:600,
-              color: msToken ? C.green : C.muted,
-              background: msToken ? "#f0fdf4" : "#f8fafc",
-              border: `1px solid ${msToken ? "#bbf7d0" : C.border}`,
-              borderRadius:20, padding:"3px 10px"
-            }}>
-              {msToken
-                ? (syncing ? "⏳ Guardando..." : "✅ OneDrive conectado")
-                : "○ OneDrive desconectado"}
-            </div>
           </div>
         </div>
-        {syncMsg && odStatus !== "ready" && odStatus !== "connecting" && <div style={{fontSize:11,color:C.red,marginTop:4,fontWeight:600}}>{syncMsg}</div>}
       </div>
 
       {/* Acumulado del día — siempre visible, en todas las pestañas */}
