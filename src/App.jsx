@@ -1156,31 +1156,19 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
           const pesoMeta    = settings.pesoMeta    || 50;
           const pesoActual  = settings.pesoKg      || 55;
 
-          // Mini bar chart component
-          const BarChart = ({ data, valueKey, meta, color, unit="" }) => {
-            const maxVal = Math.max(...data.map(d=>d[valueKey]), meta * 1.2);
+          // Progress bar component
+          const ProgressBar = ({ label, value, meta, color, unit="" }) => {
+            const pct = Math.min(Math.round((value/meta)*100), 100);
+            const over = value > meta;
             return (
-              <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80,padding:"0 4px"}}>
-                {data.map((d,i) => {
-                  const val = d[valueKey];
-                  const pct = Math.min((val/maxVal)*100, 100);
-                  const metaPct = Math.min((meta/maxVal)*100, 100);
-                  const over = val > meta * 1.1;
-                  const under = val < meta * 0.8;
-                  const barColor = over ? "#ef4444" : under ? "#f97316" : color;
-                  return (
-                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
-                      <div style={{fontSize:9,color:"#6b7280",marginBottom:2}}>{val}{unit}</div>
-                      <div style={{width:"100%",height:60,display:"flex",alignItems:"flex-end",position:"relative"}}>
-                        {/* Meta line */}
-                        <div style={{position:"absolute",bottom:`${metaPct}%`,left:0,right:0,borderTop:`1.5px dashed ${color}`,opacity:0.4}} />
-                        {/* Bar */}
-                        <div style={{width:"100%",height:`${pct}%`,background:barColor,borderRadius:"3px 3px 0 0",minHeight:2}} />
-                      </div>
-                      <div style={{fontSize:8,color:"#9ca3af",marginTop:2,textAlign:"center"}}>{d.label}</div>
-                    </div>
-                  );
-                })}
+              <div style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                  <span style={{fontSize:13,color:C.text,fontWeight:600}}>{label}</span>
+                  <span style={{fontSize:12,color:C.muted}}>{value}{unit} / {meta}{unit} · {pct}%</span>
+                </div>
+                <div style={{height:10,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:over?"#f97316":color,borderRadius:99,transition:"width 0.5s"}} />
+                </div>
               </div>
             );
           };
@@ -1239,45 +1227,61 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                 </div>
               ) : (
                 <>
-                  {/* Carbs */}
+                  {/* Macros semanales — barras de progreso */}
                   <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>🍞 CARBOHIDRATOS</div>
-                      <div style={{fontSize:11,color:C.sky,fontWeight:600}}>Meta: {metaCarbs}g/día</div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>📊 PROMEDIO SEMANAL</div>
+                      <div style={{fontSize:11,color:C.muted}}>{weeklyData.length>0 ? weeklyData[weeklyData.length-1].label : ""}</div>
                     </div>
-                    <BarChart data={weeklyData} valueKey="carbs" meta={metaCarbs} color={C.sky} unit="g" />
-                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario por semana · línea punteada = meta</div>
+                    {weeklyData.length > 0 && (() => {
+                      const last = weeklyData[weeklyData.length-1];
+                      return (
+                        <>
+                          <ProgressBar label="Carbohidratos" value={last.carbs} meta={metaCarbs} color={C.sky} unit="g" />
+                          <ProgressBar label="Proteína" value={last.protein} meta={metaProtein} color={C.green} unit="g" />
+                          <ProgressBar label="Calorías" value={last.kcal} meta={metaKcal} color={C.orange} unit="" />
+                          <div style={{borderTop:`1px solid ${C.border}`,marginTop:4,paddingTop:14}}>
+                            <div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:10}}>💉 {settings.insulinaRapida||"Insulina rápida"}</div>
+                            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                              {(() => {
+                                const allInsulin = weeklyData.map(w=>w.insulin);
+                                const lastWeekRecords = records.filter(r => {
+                                  try { return getWeekKey(parseDate(r.date)) === weeks[weeks.length-1][0]; } catch { return false; }
+                                });
+                                const weekTotal = Math.round(lastWeekRecords.reduce((s,r)=>s+(r.insulin||0),0));
+                                return [
+                                  {label:"Promedio", value: Math.round(last.insulin*10)/10+"U"},
+                                  {label:"Mínimo",   value: Math.round(Math.min(...allInsulin)*10)/10+"U"},
+                                  {label:"Máximo",   value: Math.round(Math.max(...allInsulin)*10)/10+"U"},
+                                  {label:"Total sem",value: weekTotal+"U"},
+                                ].map(({label,value})=>(
+                                  <div key={label} style={{background:"#f8fafc",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
+                                    <div style={{fontSize:10,color:C.muted,marginBottom:4}}>{label}</div>
+                                    <div style={{fontSize:18,fontWeight:700,color:C.purple}}>{value}</div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
-                  {/* Proteína */}
-                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>🥩 PROTEÍNA</div>
-                      <div style={{fontSize:11,color:C.green,fontWeight:600}}>Meta: {metaProtein}g/día</div>
+                  {/* Historial por semanas */}
+                  {weeklyData.length > 1 && (
+                    <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                      <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:14}}>📅 HISTORIAL SEMANAL</div>
+                      {weeklyData.map((w,i) => (
+                        <div key={i} style={{marginBottom:16}}>
+                          <div style={{fontSize:12,fontWeight:600,color:C.text,marginBottom:8}}>Semana del {w.label} <span style={{color:C.muted,fontWeight:400}}>· {w.days} día{w.days!==1?"s":""}</span></div>
+                          <ProgressBar label="Carbs" value={w.carbs} meta={metaCarbs} color={C.sky} unit="g" />
+                          <ProgressBar label="Proteína" value={w.protein} meta={metaProtein} color={C.green} unit="g" />
+                          <ProgressBar label="Calorías" value={w.kcal} meta={metaKcal} color={C.orange} unit="" />
+                        </div>
+                      ))}
                     </div>
-                    <BarChart data={weeklyData} valueKey="protein" meta={metaProtein} color={C.green} unit="g" />
-                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario por semana · línea punteada = meta</div>
-                  </div>
-
-                  {/* Calorías */}
-                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>🔥 CALORÍAS</div>
-                      <div style={{fontSize:11,color:C.orange,fontWeight:600}}>Meta: {metaKcal} kcal/día</div>
-                    </div>
-                    <BarChart data={weeklyData} valueKey="kcal" meta={metaKcal} color={C.orange} unit="" />
-                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario por semana · línea punteada = meta</div>
-                  </div>
-
-                  {/* Insulina */}
-                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>💉 {settings.insulinaRapida||"INSULINA RÁPIDA"}</div>
-                      <div style={{fontSize:11,color:C.purple,fontWeight:600}}>Unidades/día</div>
-                    </div>
-                    <BarChart data={weeklyData} valueKey="insulin" meta={999} color={C.purple} unit="U" />
-                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario de insulina rápida por semana</div>
-                  </div>
+                  )}
 
                   {/* Peso — al final */}
                   <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
