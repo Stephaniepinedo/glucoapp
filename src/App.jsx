@@ -779,8 +779,12 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     if (!file) return;
     setScanning(true); setScanResult(null); setScanError("");
     try {
-      // Load Tesseract.js from CDN
-      const Tesseract = (await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js")).default;
+      // Use Tesseract.js loaded via script tag in index.html
+      const Tesseract = window.Tesseract;
+      if (!Tesseract) {
+        setScanError("El escáner no está disponible. Ingresa los datos manualmente.");
+        setScanning(false); return;
+      }
       const { data: { text } } = await Tesseract.recognize(file, "spa+eng", {
         logger: () => {}
       });
@@ -860,7 +864,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
       // Read file as ArrayBuffer
       const buffer = await file.arrayBuffer();
       // Dynamically import SheetJS from CDN
-      const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm");
+      const XLSX = await import('xlsx');
       const wb = XLSX.read(buffer, { type:"array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
@@ -1156,7 +1160,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
           const pesoMeta    = settings.pesoMeta    || 50;
           const pesoActual  = settings.pesoKg      || 55;
 
-          // Progress bar component
+          // Progress bar component - without %
           const ProgressBar = ({ label, value, meta, color, unit="" }) => {
             const pct = Math.min(Math.round((value/meta)*100), 100);
             const over = value > meta;
@@ -1164,7 +1168,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
               <div style={{marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
                   <span style={{fontSize:13,color:C.text,fontWeight:600}}>{label}</span>
-                  <span style={{fontSize:12,color:C.muted}}>{value}{unit} / {meta}{unit} · {pct}%</span>
+                  <span style={{fontSize:12,color:C.muted}}>{value}{unit} / {meta}{unit}</span>
                 </div>
                 <div style={{height:10,background:"#f1f5f9",borderRadius:99,overflow:"hidden"}}>
                   <div style={{height:"100%",width:`${pct}%`,background:over?"#f97316":color,borderRadius:99,transition:"width 0.5s"}} />
@@ -1213,11 +1217,62 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                         <div style={{fontSize:11,color:C.muted,marginTop:6,fontWeight:500}}>
                           {over ? `+${Math.round(value-meta)}${unit} extra` : `${Math.round(remaining)}${unit} restante`}
                         </div>
+                        <div style={{fontSize:11,color,fontWeight:700,marginTop:2}}>{Math.min(Math.round((value/meta)*100),100)}%</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
+
+              {/* Macro distribution pie chart */}
+              {(todayTot.carbs > 0 || todayTot.protein > 0) && (() => {
+                const total = todayTot.carbs + todayTot.protein;
+                const carbsPct = total > 0 ? Math.round((todayTot.carbs/total)*100) : 0;
+                const protPct  = total > 0 ? Math.round((todayTot.protein/total)*100) : 0;
+                const cx = 60, cy = 60, r = 55;
+                const slice = (start, pct, color) => {
+                  if (pct <= 0) return null;
+                  if (pct >= 100) return <circle key={color} cx={cx} cy={cy} r={r} fill={color}/>;
+                  const a1 = (start/100)*2*Math.PI - Math.PI/2;
+                  const a2 = ((start+pct)/100)*2*Math.PI - Math.PI/2;
+                  const x1 = cx+r*Math.cos(a1), y1 = cy+r*Math.sin(a1);
+                  const x2 = cx+r*Math.cos(a2), y2 = cy+r*Math.sin(a2);
+                  const large = pct > 50 ? 1 : 0;
+                  const mid = ((start+pct/2)/100)*2*Math.PI - Math.PI/2;
+                  const lx = cx+(r*0.65)*Math.cos(mid), ly = cy+(r*0.65)*Math.sin(mid);
+                  return (
+                    <g key={color}>
+                      <path d={`M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z`} fill={color}/>
+                      {pct >= 8 && <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="11" fontWeight="700" fill="white">{pct}%</text>}
+                    </g>
+                  );
+                };
+                return (
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:16}}>🥗 DISTRIBUCIÓN DE MACROS</div>
+                    <div style={{display:"flex",alignItems:"center",gap:20}}>
+                      <svg width="120" height="120" viewBox="0 0 120 120">
+                        {slice(0, carbsPct, "#38bdf8")}
+                        {slice(carbsPct, protPct, "#f97316")}
+                      </svg>
+                      <div style={{flex:1}}>
+                        {[
+                          {label:"Carbohidratos", g:todayTot.carbs,   pct:carbsPct, color:"#38bdf8"},
+                          {label:"Proteína",      g:todayTot.protein, pct:protPct,  color:"#f97316"},
+                        ].map(({label,g,pct,color})=>(
+                          <div key={label} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <div style={{width:12,height:12,borderRadius:3,background:color,flexShrink:0}}/>
+                              <div style={{fontSize:12,color:C.text}}>{label} ({g}g)</div>
+                            </div>
+                            <div style={{fontSize:13,fontWeight:700,color}}>{pct}%</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {weeklyData.length === 0 ? (
                 <div style={{textAlign:"center",padding:40,color:C.muted}}>
