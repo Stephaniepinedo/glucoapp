@@ -1187,7 +1187,49 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
 
           return (
             <div style={{padding:16,paddingBottom:80}}>
-              <div style={{fontSize:18,fontWeight:700,marginBottom:16}}>📈 Análisis semanal</div>
+              <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>📈 Análisis</div>
+              <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Hoy · {todayStr}</div>
+
+              {/* Daily donut charts */}
+              <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:16}}>🍽️ MACROS DE HOY</div>
+                <div style={{display:"flex",justifyContent:"space-around",alignItems:"flex-start"}}>
+                  {[
+                    {label:"Carbohidratos", value:todayTot.carbs,   meta:metaCarbs,   color:"#38bdf8", unit:"g"},
+                    {label:"Proteína",      value:todayTot.protein, meta:metaProtein, color:"#f97316", unit:"g"},
+                    {label:"Calorías",      value:todayTot.kcal,    meta:metaKcal,    color:"#16a34a", unit:""},
+                  ].map(({label, value, meta, color, unit}) => {
+                    const pct = Math.min((value/meta), 1);
+                    const r = 34; const circ = 2*Math.PI*r;
+                    const dash = pct*circ;
+                    const over = value > meta;
+                    const remaining = Math.max(meta - value, 0);
+                    return (
+                      <div key={label} style={{textAlign:"center",flex:1}}>
+                        <div style={{fontSize:12,fontWeight:700,color,marginBottom:8}}>{label}</div>
+                        <div style={{position:"relative",display:"inline-block"}}>
+                          <svg width="88" height="88" viewBox="0 0 88 88">
+                            <circle cx="44" cy="44" r={r} fill="none" stroke="#f1f5f9" strokeWidth="8"/>
+                            <circle cx="44" cy="44" r={r} fill="none"
+                              stroke={color} strokeWidth="8"
+                              strokeDasharray={`${dash} ${circ}`}
+                              strokeLinecap="round"
+                              transform="rotate(-90 44 44)"
+                            />
+                          </svg>
+                          <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",textAlign:"center",lineHeight:1.1}}>
+                            <div style={{fontSize:18,fontWeight:700,color:C.text}}>{value}</div>
+                            <div style={{fontSize:10,color:C.muted}}>/{meta}{unit}</div>
+                          </div>
+                        </div>
+                        <div style={{fontSize:11,color:C.muted,marginTop:6,fontWeight:500}}>
+                          {over ? `+${Math.round(value-meta)}${unit} extra` : `${Math.round(remaining)}${unit} restante`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               {weeklyData.length === 0 ? (
                 <div style={{textAlign:"center",padding:40,color:C.muted}}>
@@ -1197,27 +1239,6 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                 </div>
               ) : (
                 <>
-                  {/* Peso */}
-                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:12}}>⚖️ PESO</div>
-                    <div style={{display:"flex",gap:12}}>
-                      <div style={{flex:1,background:"#f8fafc",borderRadius:12,padding:12,textAlign:"center"}}>
-                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Actual</div>
-                        <div style={{fontSize:24,fontWeight:700,color:C.blue}}>{pesoActual}<span style={{fontSize:12}}> kg</span></div>
-                      </div>
-                      <div style={{flex:1,background:"#f0fdf4",borderRadius:12,padding:12,textAlign:"center"}}>
-                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Meta</div>
-                        <div style={{fontSize:24,fontWeight:700,color:C.green}}>{pesoMeta}<span style={{fontSize:12}}> kg</span></div>
-                      </div>
-                      <div style={{flex:1,background:"#eff6ff",borderRadius:12,padding:12,textAlign:"center"}}>
-                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Diferencia</div>
-                        <div style={{fontSize:24,fontWeight:700,color:pesoActual>pesoMeta?C.orange:C.green}}>
-                          {pesoActual>pesoMeta?"+":""}{(pesoActual-pesoMeta).toFixed(1)}<span style={{fontSize:12}}> kg</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Carbs */}
                   <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -1256,6 +1277,27 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                     </div>
                     <BarChart data={weeklyData} valueKey="insulin" meta={999} color={C.purple} unit="U" />
                     <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario de insulina rápida por semana</div>
+                  </div>
+
+                  {/* Peso — al final */}
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:12}}>⚖️ PESO</div>
+                    <div style={{display:"flex",gap:12}}>
+                      <div style={{flex:1,background:"#f8fafc",borderRadius:12,padding:12,textAlign:"center"}}>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Actual</div>
+                        <div style={{fontSize:24,fontWeight:700,color:C.blue}}>{pesoActual}<span style={{fontSize:12}}> kg</span></div>
+                      </div>
+                      <div style={{flex:1,background:"#f0fdf4",borderRadius:12,padding:12,textAlign:"center"}}>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Meta</div>
+                        <div style={{fontSize:24,fontWeight:700,color:C.green}}>{pesoMeta}<span style={{fontSize:12}}> kg</span></div>
+                      </div>
+                      <div style={{flex:1,background:"#fff7ed",borderRadius:12,padding:12,textAlign:"center"}}>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Diferencia</div>
+                        <div style={{fontSize:24,fontWeight:700,color:pesoActual>pesoMeta?C.orange:C.green}}>
+                          {pesoActual>pesoMeta?"+":""}{(pesoActual-pesoMeta).toFixed(1)}<span style={{fontSize:12}}> kg</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,padding:12,fontSize:12,color:"#92400e"}}>
