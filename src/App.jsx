@@ -146,37 +146,6 @@ const FOODS = [
   { name: "Pierna/muslo pollo", portion: "100g", carbs: 0, protein: 25, kcal: 190, cat: "Carnes" },
   { name: "Lomo de cerdo", portion: "100g", carbs: 0, protein: 20, kcal: 185, cat: "Carnes" },
   { name: "Chicharrón asado", portion: "100g", carbs: 0, protein: 30, kcal: 500, cat: "Carnes" },
-  { name: "Huevo entero - Cocido", portion: "1 unidad 50g", carbs: 0.5, protein: 6, kcal: 70, cat: "Carnes" },
-  { name: "Huevo entero - Frito", portion: "1 unidad 50g", carbs: 0.5, protein: 6, kcal: 90, cat: "Carnes" },
-  { name: "Huevo entero - Asado", portion: "1 unidad 50g", carbs: 0.5, protein: 6, kcal: 70, cat: "Carnes" },
-  { name: "Huevo entero - Cocido", portion: "2 unidades 100g", carbs: 1, protein: 12, kcal: 140, cat: "Carnes" },
-  { name: "Huevo entero - Frito", portion: "2 unidades 100g", carbs: 1, protein: 12, kcal: 180, cat: "Carnes" },
-  { name: "Huevo entero - Asado", portion: "2 unidades 100g", carbs: 1, protein: 12, kcal: 140, cat: "Carnes" },
-  { name: "Huevo entero - Cocido", portion: "3 unidades 150g", carbs: 1.5, protein: 18, kcal: 210, cat: "Carnes" },
-  { name: "Huevo entero - Frito", portion: "3 unidades 150g", carbs: 1.5, protein: 18, kcal: 270, cat: "Carnes" },
-  { name: "Huevo entero - Asado", portion: "3 unidades 150g", carbs: 1.5, protein: 18, kcal: 210, cat: "Carnes" },
-  { name: "Clara de huevo - Cocida", portion: "1 clara 33g", carbs: 0.2, protein: 3.5, kcal: 17, cat: "Carnes" },
-  { name: "Clara de huevo - Frita", portion: "1 clara 33g", carbs: 0.2, protein: 3.5, kcal: 25, cat: "Carnes" },
-  { name: "Clara de huevo - Asada", portion: "1 clara 33g", carbs: 0.2, protein: 3.5, kcal: 17, cat: "Carnes" },
-  { name: "Huevo + claras - Cocido", portion: "2 huevos + 3 claras", carbs: 2, protein: 23, kcal: 191, cat: "Carnes" },
-  { name: "Huevo + claras - Frito", portion: "2 huevos + 3 claras", carbs: 2, protein: 23, kcal: 230, cat: "Carnes" },
-  { name: "Huevo + claras - Asado", portion: "2 huevos + 3 claras", carbs: 2, protein: 23, kcal: 191, cat: "Carnes" },
-  { name: "Pechuga de pollo - Asada/plancha", portion: "100g", carbs: 0, protein: 31, kcal: 165, cat: "Carnes" },
-  { name: "Pechuga de pollo - Asada/plancha", portion: "150g", carbs: 0, protein: 46, kcal: 248, cat: "Carnes" },
-  { name: "Pechuga de pollo - Asada/plancha", portion: "200g", carbs: 0, protein: 62, kcal: 330, cat: "Carnes" },
-  { name: "Lomo fino de res - Asado/plancha", portion: "100g", carbs: 0, protein: 29, kcal: 190, cat: "Carnes" },
-  { name: "Lomo fino de res - Asado/plancha", portion: "150g", carbs: 0, protein: 44, kcal: 285, cat: "Carnes" },
-  { name: "Lomo fino de res - Asado/plancha", portion: "200g", carbs: 0, protein: 58, kcal: 380, cat: "Carnes" },
-  { name: "Carne molida magra - Plancha", portion: "100g", carbs: 0, protein: 26, kcal: 220, cat: "Carnes" },
-  { name: "Carne molida magra - Plancha", portion: "150g", carbs: 0, protein: 39, kcal: 330, cat: "Carnes" },
-  { name: "Carne molida magra - Plancha", portion: "200g", carbs: 0, protein: 52, kcal: 440, cat: "Carnes" },
-  { name: "Salmón - Asado/plancha", portion: "100g", carbs: 0, protein: 25, kcal: 206, cat: "Pescados" },
-  { name: "Tilapia - Asada/plancha", portion: "100g", carbs: 0, protein: 26, kcal: 128, cat: "Pescados" },
-  { name: "Camarón - Asado/cocido", portion: "100g", carbs: 0.2, protein: 24, kcal: 99, cat: "Pescados" },
-  { name: "Langosta - Asada/cocida", portion: "100g", carbs: 0, protein: 27, kcal: 128, cat: "Pescados" },
-  { name: "Langostinos - Asados/cocidos", portion: "100g", carbs: 0.2, protein: 24, kcal: 106, cat: "Pescados" },
-  { name: "Mejillones - Cocidos/asados", portion: "100g", carbs: 7, protein: 24, kcal: 172, cat: "Pescados" },
-  { name: "Calamares - Plancha", portion: "100g", carbs: 3, protein: 18, kcal: 92, cat: "Pescados" },
   { name: "Tilapia roja", portion: "100g", carbs: 0, protein: 26, kcal: 128, cat: "Pescados" },
   { name: "Trucha arco iris", portion: "100g", carbs: 0, protein: 22, kcal: 148, cat: "Pescados" },
   { name: "Cachama", portion: "100g", carbs: 0, protein: 18, kcal: 140, cat: "Pescados" },
@@ -201,6 +170,12 @@ const FOODS = [
   { name: "Chocolate Luker", portion: "1 porción", carbs: 2, protein: 1, kcal: 30, cat: "Personalizados" },
   { name: "Whey Protein Nutramerican", portion: "1/2 scoop 26g", carbs: 1.2, protein: 20, kcal: 93, cat: "Personalizados" },
   { name: "Whey Protein Nutramerican", portion: "1 scoop 40g", carbs: 2.4, protein: 40, kcal: 186, cat: "Personalizados" },
+  { name: "Cereal Crispies The Protein Choice", portion: "1/4 sobre 50g", carbs: 23, protein: 10, kcal: 165, cat: "Personalizados" },
+  { name: "Cereal Crispies The Protein Choice", portion: "100g", carbs: 46, protein: 20, kcal: 330, cat: "Personalizados" },
+  { name: "Yogurt Griego San Martín", portion: "1/2 vaso 110ml", carbs: 4.6, protein: 7, kcal: 46, cat: "Personalizados" },
+  { name: "Yogurt Griego San Martín", portion: "1 vaso 220ml", carbs: 9.2, protein: 14, kcal: 93, cat: "Personalizados" },
+  { name: "Granola Amande Macadamia Chocolate", portion: "1 unidad 25g", carbs: 13, protein: 2.7, kcal: 120, cat: "Personalizados" },
+  { name: "Granola Amande Macadamia Chocolate", portion: "2 unidades 50g", carbs: 26, protein: 5.4, kcal: 240, cat: "Personalizados" },
 ];
 
 const CATS = ["Recientes","Todos","Cereales","Tubérculos","Frutas","Leguminosas","Lácteos","Carnes","Pescados","Verduras","Bebidas","Personalizados"];
@@ -227,19 +202,13 @@ const DEFAULT_SETTINGS = {
     { label:"🌙 Noche", from:"19:00", to:"00:00", ratio:3.5 },
   ],
   sensitivity:30,
-  // Rangos de glucemia (mg/dL) — 5 niveles
-  hipoglucemia:54,
-  glucemiaBaja:70,
-  objetivo:100,
-  glucemiaAlta:180,
-  hiperglucemia:250,
-  // Datos personales
+  hipoglucemia:54, glucemiaBaja:70, objetivo:100, glucemiaAlta:180, hiperglucemia:250,
   sexo:"Femenino", pesoKg:55, alturaCm:155, fechaNacimiento:"1991-07-01",
-  // Insulina basal
-  toujeoDosis:17,
-  insulinaRapida:"Apidra®",
-  insulinaLenta:"Toujeo®",
+  pesoMeta:50,
+  toujeoDosis:17, insulinaRapida:"Apidra®", insulinaLenta:"Toujeo®",
   otrosMedicamentos:["Atorvastatina 10mg","Dapaglifosina"],
+  // Metas nutricionales diarias
+  metaCarbs:130, metaProtein:85, metaKcal:1350,
 };
 
 const getCurrentRatio = (ratios) => {
@@ -548,6 +517,8 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [scanError, setScanError] = useState("");
+  const [editingFood, setEditingFood] = useState(null); // {index, food} for editing
+  const [editFood, setEditFood] = useState({name:"",portion:"",carbs:"",protein:"",kcal:""});
   const [xlsxImporting, setXlsxImporting] = useState(false);
   const [xlsxMsg, setXlsxMsg] = useState("");
   const [settings, setSettings] = useState(() => {
@@ -808,47 +779,73 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     if (!file) return;
     setScanning(true); setScanResult(null); setScanError("");
     try {
-      const base64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(",")[1]);
-        r.onerror = () => rej(new Error("No se pudo leer la imagen"));
-        r.readAsDataURL(file);
+      // Load Tesseract.js from CDN
+      const Tesseract = (await import("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js")).default;
+      const { data: { text } } = await Tesseract.recognize(file, "spa+eng", {
+        logger: () => {}
       });
-      const mediaType = file.type || "image/jpeg";
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model:"claude-sonnet-4-6",
-          max_tokens:1000,
-          messages:[{
-            role:"user",
-            content:[
-              { type:"image", source:{ type:"base64", media_type:mediaType, data:base64 } },
-              { type:"text", text:`Eres un asistente nutricional. Analiza esta etiqueta nutricional y extrae los datos por PORCIÓN (no por 100g).
-Responde SOLO con un JSON válido sin texto adicional ni backticks, con este formato exacto:
-{"name":"nombre del producto","portion":"descripción de la porción","carbs":0.0,"protein":0.0,"kcal":0}
-- name: nombre del producto que aparece en la etiqueta
-- portion: tamaño de la porción (ej: "1 unidad 45g", "1 vaso 200ml")
-- carbs: carbohidratos totales en gramos por porción (número decimal)
-- protein: proteínas en gramos por porción (número decimal)  
-- kcal: calorías por porción (número entero)
-Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
-            ]
-          }]
-        })
-      });
-      const data = await response.json();
-      const text = data.content?.find(b => b.type==="text")?.text || "";
-      const clean = text.replace(/```json|```/g,"").trim();
-      const parsed = JSON.parse(clean);
+
+      // Parse nutritional values from OCR text
+      const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+      const fullText = normalize(text);
+
+      // Helper: find number after keyword
+      const findVal = (keywords) => {
+        for (const kw of keywords) {
+          const idx = fullText.indexOf(normalize(kw));
+          if (idx === -1) continue;
+          const after = fullText.slice(idx + kw.length, idx + kw.length + 30);
+          const match = after.match(/[\d]+[.,]?[\d]*/);
+          if (match) return parseFloat(match[0].replace(",","."));
+        }
+        return 0;
+      };
+
+      // Find portion size
+      const findPortion = () => {
+        for (const line of lines) {
+          const n = normalize(line);
+          if (n.includes("porcion") || n.includes("porción") || n.includes("serving size") || n.includes("tamano")) {
+            const match = line.match(/[\d]+\s*[gGmMlL]/);
+            if (match) return match[0].trim();
+            return line.replace(/.*[:\/]/,"").trim().slice(0,30);
+          }
+        }
+        return "1 porción";
+      };
+
+      // Find product name (first non-nutritional line)
+      const findName = () => {
+        for (const line of lines) {
+          const n = normalize(line);
+          if (n.length < 3) continue;
+          if (n.includes("informacion") || n.includes("nutricional") || n.includes("caloria") || n.includes("serving")) continue;
+          if (/^\d/.test(line)) continue;
+          return line.slice(0, 40);
+        }
+        return "Producto escaneado";
+      };
+
+      const carbs   = findVal(["carbohidratos totales","total carbohydrates","carbohidratos","carbohydrate","hidratos"]);
+      const protein = findVal(["proteina","proteína","protein"]);
+      const kcal    = findVal(["calorias","calorías","calories","kcal","energy"]);
+      const portion = findPortion();
+      const name    = findName();
+
+      if (carbs === 0 && protein === 0 && kcal === 0) {
+        setScanError("No se pudieron leer los valores nutricionales. Intenta con mejor iluminación o ingresa los datos manualmente.");
+        setScanning(false); return;
+      }
+
+      const parsed = { name, portion, carbs, protein, kcal };
       setScanResult(parsed);
       setNewFood({
-        name: parsed.name || "",
-        portion: parsed.portion || "",
-        carbs: String(parsed.carbs ?? ""),
-        protein: String(parsed.protein ?? ""),
-        kcal: String(parsed.kcal ?? ""),
+        name: parsed.name,
+        portion: parsed.portion,
+        carbs: String(parsed.carbs),
+        protein: String(parsed.protein),
+        kcal: String(parsed.kcal),
       });
     } catch(e) {
       setScanError("No se pudo leer la etiqueta. Intenta con mejor iluminación o ingresa los datos manualmente.");
@@ -1111,6 +1108,165 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
           </div>
         )}
 
+        {/* ── ANÁLISIS ── */}
+        {tab==="analysis" && (() => {
+          // Build last 7 weeks of data grouped by week
+          const parseDate = (s) => {
+            const [d,m,y] = s.split("/");
+            return new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+          };
+          const getWeekKey = (date) => {
+            const d = new Date(date);
+            d.setHours(0,0,0,0);
+            d.setDate(d.getDate() - d.getDay()); // Sunday
+            return d.toLocaleDateString("es-CO");
+          };
+
+          // Group records by week
+          const weekMap = {};
+          for (const r of records) {
+            try {
+              const wk = getWeekKey(parseDate(r.date));
+              if (!weekMap[wk]) weekMap[wk] = [];
+              weekMap[wk].push(r);
+            } catch {}
+          }
+
+          // Get last 8 weeks sorted
+          const weeks = Object.entries(weekMap)
+            .sort((a,b) => new Date(a[0]) - new Date(b[0]))
+            .slice(-8);
+
+          // Calculate weekly averages
+          const weeklyData = weeks.map(([wk, recs]) => {
+            const days = [...new Set(recs.map(r => r.date))].length;
+            return {
+              label: wk.slice(0,5), // "DD/MM"
+              carbs:   Math.round(recs.reduce((s,r)=>s+(parseFloat(r.carbs)||0),0) / days),
+              protein: Math.round(recs.reduce((s,r)=>s+(parseFloat(r.protein)||0),0) / days),
+              kcal:    Math.round(recs.reduce((s,r)=>s+(parseFloat(r.kcal)||0),0) / days),
+              insulin: Math.round((recs.reduce((s,r)=>s+(r.insulin||0),0) / days) * 10) / 10,
+              days,
+            };
+          });
+
+          const metaCarbs   = settings.metaCarbs   || 130;
+          const metaProtein = settings.metaProtein || 85;
+          const metaKcal    = settings.metaKcal    || 1350;
+          const pesoMeta    = settings.pesoMeta    || 50;
+          const pesoActual  = settings.pesoKg      || 55;
+
+          // Mini bar chart component
+          const BarChart = ({ data, valueKey, meta, color, unit="" }) => {
+            const maxVal = Math.max(...data.map(d=>d[valueKey]), meta * 1.2);
+            return (
+              <div style={{display:"flex",alignItems:"flex-end",gap:4,height:80,padding:"0 4px"}}>
+                {data.map((d,i) => {
+                  const val = d[valueKey];
+                  const pct = Math.min((val/maxVal)*100, 100);
+                  const metaPct = Math.min((meta/maxVal)*100, 100);
+                  const over = val > meta * 1.1;
+                  const under = val < meta * 0.8;
+                  const barColor = over ? "#ef4444" : under ? "#f97316" : color;
+                  return (
+                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
+                      <div style={{fontSize:9,color:"#6b7280",marginBottom:2}}>{val}{unit}</div>
+                      <div style={{width:"100%",height:60,display:"flex",alignItems:"flex-end",position:"relative"}}>
+                        {/* Meta line */}
+                        <div style={{position:"absolute",bottom:`${metaPct}%`,left:0,right:0,borderTop:`1.5px dashed ${color}`,opacity:0.4}} />
+                        {/* Bar */}
+                        <div style={{width:"100%",height:`${pct}%`,background:barColor,borderRadius:"3px 3px 0 0",minHeight:2}} />
+                      </div>
+                      <div style={{fontSize:8,color:"#9ca3af",marginTop:2,textAlign:"center"}}>{d.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          };
+
+          return (
+            <div style={{padding:16,paddingBottom:80}}>
+              <div style={{fontSize:18,fontWeight:700,marginBottom:16}}>📈 Análisis semanal</div>
+
+              {weeklyData.length === 0 ? (
+                <div style={{textAlign:"center",padding:40,color:C.muted}}>
+                  <div style={{fontSize:40,marginBottom:12}}>📊</div>
+                  <div style={{fontSize:15,fontWeight:600}}>Sin datos aún</div>
+                  <div style={{fontSize:13,marginTop:6}}>Registra tus comidas e insulina para ver el análisis</div>
+                </div>
+              ) : (
+                <>
+                  {/* Peso */}
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:12}}>⚖️ PESO</div>
+                    <div style={{display:"flex",gap:12}}>
+                      <div style={{flex:1,background:"#f8fafc",borderRadius:12,padding:12,textAlign:"center"}}>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Actual</div>
+                        <div style={{fontSize:24,fontWeight:700,color:C.blue}}>{pesoActual}<span style={{fontSize:12}}> kg</span></div>
+                      </div>
+                      <div style={{flex:1,background:"#f0fdf4",borderRadius:12,padding:12,textAlign:"center"}}>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Meta</div>
+                        <div style={{fontSize:24,fontWeight:700,color:C.green}}>{pesoMeta}<span style={{fontSize:12}}> kg</span></div>
+                      </div>
+                      <div style={{flex:1,background:"#eff6ff",borderRadius:12,padding:12,textAlign:"center"}}>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:4}}>Diferencia</div>
+                        <div style={{fontSize:24,fontWeight:700,color:pesoActual>pesoMeta?C.orange:C.green}}>
+                          {pesoActual>pesoMeta?"+":""}{(pesoActual-pesoMeta).toFixed(1)}<span style={{fontSize:12}}> kg</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Carbs */}
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>🍞 CARBOHIDRATOS</div>
+                      <div style={{fontSize:11,color:C.sky,fontWeight:600}}>Meta: {metaCarbs}g/día</div>
+                    </div>
+                    <BarChart data={weeklyData} valueKey="carbs" meta={metaCarbs} color={C.sky} unit="g" />
+                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario por semana · línea punteada = meta</div>
+                  </div>
+
+                  {/* Proteína */}
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>🥩 PROTEÍNA</div>
+                      <div style={{fontSize:11,color:C.green,fontWeight:600}}>Meta: {metaProtein}g/día</div>
+                    </div>
+                    <BarChart data={weeklyData} valueKey="protein" meta={metaProtein} color={C.green} unit="g" />
+                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario por semana · línea punteada = meta</div>
+                  </div>
+
+                  {/* Calorías */}
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>🔥 CALORÍAS</div>
+                      <div style={{fontSize:11,color:C.orange,fontWeight:600}}>Meta: {metaKcal} kcal/día</div>
+                    </div>
+                    <BarChart data={weeklyData} valueKey="kcal" meta={metaKcal} color={C.orange} unit="" />
+                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario por semana · línea punteada = meta</div>
+                  </div>
+
+                  {/* Insulina */}
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{fontSize:13,fontWeight:700,color:C.muted}}>💉 {settings.insulinaRapida||"INSULINA RÁPIDA"}</div>
+                      <div style={{fontSize:11,color:C.purple,fontWeight:600}}>Unidades/día</div>
+                    </div>
+                    <BarChart data={weeklyData} valueKey="insulin" meta={999} color={C.purple} unit="U" />
+                    <div style={{fontSize:11,color:C.muted,marginTop:6}}>Promedio diario de insulina rápida por semana</div>
+                  </div>
+
+                  <div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,padding:12,fontSize:12,color:"#92400e"}}>
+                    ⚠️ Las metas son orientativas. Ajústalas según indicación de tu nutricionista en ⚙️ Config.
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {/* ── HISTORIAL ── */}
         {tab==="records" && (
           <div style={{padding:16}}>
@@ -1215,17 +1371,55 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
               <div style={{marginBottom:20}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.muted,marginBottom:12}}>Guardados permanentemente ({customFoods.length})</div>
                 {customFoods.map((f,i) => (
-                  <div key={i} style={{background:C.card,borderRadius:12,padding:"12px 14px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div>
-                      <div style={{fontSize:14,fontWeight:600}}>{f.name}</div>
-                      <div style={{fontSize:12}}>
-                        <span style={{color:C.sky}}>{f.carbs}g C</span>
-                        {f.protein>0 && <span style={{color:C.green}}> · {f.protein}g P</span>}
-                        {f.kcal>0 && <span style={{color:C.orange}}> · {f.kcal} kcal</span>}
+                  <div key={i} style={{background:C.card,borderRadius:12,padding:"12px 14px",marginBottom:8}}>
+                    {editingFood?.index===i ? (
+                      // Edit mode
+                      <div>
+                        <input value={editFood.name} onChange={e=>setEditFood(p=>({...p,name:e.target.value}))}
+                          placeholder="Nombre" style={{...inp,marginBottom:6,fontSize:13}} />
+                        <input value={editFood.portion} onChange={e=>setEditFood(p=>({...p,portion:e.target.value}))}
+                          placeholder="Porción" style={{...inp,marginBottom:6,fontSize:13}} />
+                        <div style={{display:"flex",gap:6,marginBottom:8}}>
+                          <input type="number" value={editFood.carbs} onChange={e=>setEditFood(p=>({...p,carbs:e.target.value}))}
+                            placeholder="Carbs" style={{...inp,flex:1,fontSize:13}} />
+                          <input type="number" value={editFood.protein} onChange={e=>setEditFood(p=>({...p,protein:e.target.value}))}
+                            placeholder="Prot" style={{...inp,flex:1,fontSize:13}} />
+                          <input type="number" value={editFood.kcal} onChange={e=>setEditFood(p=>({...p,kcal:e.target.value}))}
+                            placeholder="Kcal" style={{...inp,flex:1,fontSize:13}} />
+                        </div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>{
+                            setCustomFoods(p=>p.map((x,j)=>j===i?{...x,...editFood,carbs:parseFloat(editFood.carbs)||0,protein:parseFloat(editFood.protein)||0,kcal:parseFloat(editFood.kcal)||0}:x));
+                            setEditingFood(null);
+                          }} style={{flex:1,background:C.green,border:"none",color:"white",borderRadius:10,padding:"8px 0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                            ✓ Guardar
+                          </button>
+                          <button onClick={()=>setEditingFood(null)}
+                            style={{flex:1,background:"#f1f5f9",border:"none",color:C.muted,borderRadius:10,padding:"8px 0",fontSize:13,cursor:"pointer"}}>
+                            Cancelar
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <button onClick={()=>setCustomFoods(p=>p.filter((_,j)=>j!==i))}
-                      style={{background:C.red+"20",border:"none",color:C.red,borderRadius:8,padding:"4px 10px",fontSize:13,cursor:"pointer"}}>✕</button>
+                    ) : (
+                      // View mode
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <div style={{fontSize:14,fontWeight:600}}>{f.name}</div>
+                          <div style={{fontSize:12,color:C.muted}}>{f.portion}</div>
+                          <div style={{fontSize:12,marginTop:2}}>
+                            <span style={{color:C.sky}}>{f.carbs}g C</span>
+                            {f.protein>0 && <span style={{color:C.green}}> · {f.protein}g P</span>}
+                            {f.kcal>0 && <span style={{color:C.orange}}> · {f.kcal} kcal</span>}
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:6}}>
+                          <button onClick={()=>{setEditingFood({index:i,food:f});setEditFood({name:f.name,portion:f.portion,carbs:String(f.carbs),protein:String(f.protein),kcal:String(f.kcal)});}}
+                            style={{background:"#eff6ff",border:"none",color:C.blue,borderRadius:8,padding:"6px 10px",fontSize:13,cursor:"pointer"}}>✏️</button>
+                          <button onClick={()=>{ if(window.confirm(`¿Borrar "${f.name}"?`)) setCustomFoods(p=>p.filter((_,j)=>j!==i)); }}
+                            style={{background:C.red+"20",border:"none",color:C.red,borderRadius:8,padding:"6px 10px",fontSize:13,cursor:"pointer"}}>🗑️</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1554,6 +1748,41 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
               </div>
             </div>
 
+            <div style={{background:C.card,borderRadius:20,padding:20,marginBottom:14}}>
+              <div style={{fontSize:12,color:C.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:16}}>🎯 Metas nutricionales diarias</div>
+              <div style={{fontSize:12,color:C.muted,marginBottom:14,lineHeight:1.6}}>
+                Valores sugeridos según tu perfil. Ajústalos según indicación de tu nutricionista.
+              </div>
+
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:13,color:C.muted,marginBottom:6}}>Peso meta (kg)</div>
+                <input type="number" value={settings.pesoMeta||50}
+                  onChange={e=>setSettings(p=>({...p,pesoMeta:parseFloat(e.target.value)||0}))}
+                  style={{...inp,color:C.green,fontSize:22,fontWeight:700,fontFamily:"monospace"}} />
+              </div>
+
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:13,color:C.muted,marginBottom:6}}>Carbohidratos diarios (g)</div>
+                <input type="number" value={settings.metaCarbs||130}
+                  onChange={e=>setSettings(p=>({...p,metaCarbs:parseFloat(e.target.value)||0}))}
+                  style={{...inp,color:C.sky,fontSize:22,fontWeight:700,fontFamily:"monospace"}} />
+              </div>
+
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:13,color:C.muted,marginBottom:6}}>Proteína diaria (g)</div>
+                <input type="number" value={settings.metaProtein||85}
+                  onChange={e=>setSettings(p=>({...p,metaProtein:parseFloat(e.target.value)||0}))}
+                  style={{...inp,color:C.green,fontSize:22,fontWeight:700,fontFamily:"monospace"}} />
+              </div>
+
+              <div style={{marginBottom:4}}>
+                <div style={{fontSize:13,color:C.muted,marginBottom:6}}>Calorías diarias (kcal)</div>
+                <input type="number" value={settings.metaKcal||1350}
+                  onChange={e=>setSettings(p=>({...p,metaKcal:parseFloat(e.target.value)||0}))}
+                  style={{...inp,color:C.orange,fontSize:22,fontWeight:700,fontFamily:"monospace"}} />
+              </div>
+            </div>
+
             <button onClick={async ()=>{
                 try { localStorage.setItem(`glucoapp-${currentUser}-settings`, JSON.stringify(settings)); } catch {}
                 if (fileId) await saveSettingsToOneDrive(fileId, settings);
@@ -1671,14 +1900,15 @@ Si no puedes leer algún valor, usa 0. Responde SOLO el JSON.` }
       {/* Nav */}
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:C.bg,borderTop:`1px solid ${C.border}`,display:"flex",padding:"8px 0 16px",zIndex:40}}>
         {[
-          {id:"home",    icon:"🏠",label:"Inicio"},
-          {id:"records", icon:"📊",label:"Historial"},
-          {id:"foodsPage",icon:"➕",label:"Alimentos"},
-          {id:"settings",icon:"⚙️",label:"Config"},
+          {id:"home",     icon:"🏠", label:"Inicio"},
+          {id:"records",  icon:"📋", label:"Historial"},
+          {id:"analysis", icon:"📈", label:"Análisis"},
+          {id:"foodsPage",icon:"➕", label:"Alimentos"},
+          {id:"settings", icon:"⚙️", label:"Config"},
         ].map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <div style={{fontSize:22}}>{t.icon}</div>
-            <div style={{fontSize:10,fontWeight:600,color:tab===t.id?C.blue:C.muted}}>{t.label}</div>
+            <div style={{fontSize:20}}>{t.icon}</div>
+            <div style={{fontSize:9,fontWeight:600,color:tab===t.id?C.blue:C.muted}}>{t.label}</div>
             {tab===t.id && <div style={{width:20,height:2,background:C.blue,borderRadius:2}} />}
           </button>
         ))}
