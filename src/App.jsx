@@ -115,8 +115,8 @@ const FOODS = [
   { name: "Papa criolla", portion: "1 pequeña", carbs: 5, protein: 1, kcal: 28, cat: "Tubérculos" },
   { name: "Papa criolla", portion: "3 pequeñas", carbs: 15, protein: 2, kcal: 75, cat: "Tubérculos" },
   { name: "Papa francesa", portion: "10 unidades", carbs: 15, protein: 2, kcal: 120, cat: "Tubérculos" },
-  { name: "Plátano hartón", portion: "1/4 unidad", carbs: 15, protein: 1, kcal: 65, cat: "Tubérculos" },
-  { name: "Plátano hartón", portion: "1/2 unidad", carbs: 30, protein: 1, kcal: 130, cat: "Tubérculos" },
+  { name: "Platano hartón", portion: "1/4 unidad", carbs: 15, protein: 1, kcal: 65, cat: "Tubérculos" },
+  { name: "Platano hartón", portion: "1/2 unidad", carbs: 30, protein: 1, kcal: 130, cat: "Tubérculos" },
   { name: "Guinéo", portion: "1 unidad pequeña", carbs: 15, protein: 1, kcal: 65, cat: "Tubérculos" },
   { name: "Yuca", portion: "1 astilla pequeña", carbs: 15, protein: 1, kcal: 80, cat: "Tubérculos" },
   { name: "Ñame", portion: "1 trozo mediano", carbs: 15, protein: 2, kcal: 70, cat: "Tubérculos" },
@@ -137,6 +137,13 @@ const FOODS = [
   { name: "Leche entera", portion: "1 vaso 200ml", carbs: 10, protein: 6, kcal: 120, cat: "Lácteos" },
   { name: "Leche entera", portion: "1/2 vaso 100ml", carbs: 5, protein: 3, kcal: 60, cat: "Lácteos" },
   { name: "Yogurt finesse", portion: "1 vaso 180ml", carbs: 11, protein: 5, kcal: 90, cat: "Lácteos" },
+  { name: "Kefir", portion: "1/2 vaso 110ml", carbs: 4, protein: 5, kcal: 34, cat: "Lácteos" },
+  { name: "Kefir", portion: "1 vaso 220ml", carbs: 8, protein: 11, kcal: 34, cat: "Lácteos" },
+  { name: "Milo", portion: "2 cucharadas", carbs: 13, protein: 4, kcal: 73, cat: "Bebidas" },
+  { name: "Huevo", portion: "1 unidad", carbs: 0.5, protein: 6, kcal: 70, cat: "Carnes" },
+  { name: "Huevo", portion: "2 unidades", carbs: 1, protein: 12, kcal: 140, cat: "Carnes" },
+  { name: "Huevo", portion: "3 unidades", carbs: 1.5, protein: 18, kcal: 210, cat: "Carnes" },
+  { name: "Helado Patti", portion: "1 vaso pequeño", carbs: 15, protein: 6, kcal: 143, cat: "Personalizados" },
   { name: "Carne de res magra", portion: "100g", carbs: 0, protein: 26, kcal: 190, cat: "Carnes" },
   { name: "Carne de res magra", portion: "150g", carbs: 0, protein: 39, kcal: 285, cat: "Carnes" },
   { name: "Hígado de res", portion: "100g", carbs: 0, protein: 26, kcal: 135, cat: "Carnes" },
@@ -153,6 +160,7 @@ const FOODS = [
   { name: "Mojarra", portion: "100g", carbs: 0, protein: 22, kcal: 120, cat: "Pescados" },
   { name: "Atún enlatado", portion: "100g", carbs: 0, protein: 28, kcal: 130, cat: "Pescados" },
   { name: "Salmón", portion: "100g", carbs: 0, protein: 20, kcal: 208, cat: "Pescados" },
+  { name: "Verdura cocida", portion: "1 taza 185g", carbs: 10, protein: 0, kcal: 0, cat: "Verduras" },
   { name: "Verdura", portion: "1/2 taza", carbs: 5, protein: 2, kcal: 25, cat: "Verduras" },
   { name: "Verdura cruda", portion: "1 taza", carbs: 5, protein: 1, kcal: 20, cat: "Verduras" },
   { name: "Piña colada", portion: "1 vaso", carbs: 35, protein: 0, kcal: 230, cat: "Bebidas" },
@@ -184,6 +192,105 @@ const FOODS = [
   { name: "Yogurt Griego San Martín", portion: "1 vaso 220ml", carbs: 9.2, protein: 14, kcal: 93, cat: "Personalizados" },
   { name: "Granola Amande Macadamia Chocolate", portion: "1 unidad 25g", carbs: 13, protein: 2.7, kcal: 120, cat: "Personalizados" },
   { name: "Granola Amande Macadamia Chocolate", portion: "2 unidades 50g", carbs: 26, protein: 5.4, kcal: 240, cat: "Personalizados" },
+  // ── Cereales (Medtronic) ──
+  { name: "Almojábana", portion: "1 unidad mediana", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Amaranto cocido", portion: "8 cdas soperas", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Arepa maíz blanco/amarillo", portion: "1 unidad CD", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Arepa redonda pequeña", portion: "1 unidad", carbs: 10, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Cereal Corn Flakes", portion: "1/2 taza", carbs: 23, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Cereal Fitness Nestlé", portion: "1 bolsa 35g", carbs: 29, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Cebada perlada cocida", portion: "1 taza", carbs: 45, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Cuscús cocido", portion: "3 cdas soperas", carbs: 33, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Croissant", portion: "1 unidad mediana", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Envuelto de mazorca", portion: "1 unidad mediana", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Fécula de maíz", portion: "4 cdas soperas", carbs: 24, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Galleta soda/saltina/integral", portion: "3 unidades", carbs: 15, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Harina de trigo", portion: "3 cdas soperas", carbs: 15, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Maíz pira preparado", portion: "1 taza", carbs: 5, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Mantecada/Ponqué/Torta", portion: "1 tajada mediana", carbs: 35, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Mazorca cocida", portion: "1 unidad grande", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Mazorca desgranada", portion: "1 cda sopera", carbs: 3, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Pan tajado blanco/centeno/integral", portion: "1 tajada", carbs: 15, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Pan blandito/rollo panadería", portion: "1 unidad pequeña", carbs: 20, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Pan perro", portion: "1 unidad mediana", carbs: 35, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Pan hamburguesa", portion: "1 unidad mediana", carbs: 45, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Pan de bono", portion: "1 unidad mediana", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Pan pita", portion: "1 unidad CD", carbs: 30, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Tostada/calado", portion: "1 unidad pequeña", carbs: 10, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Tortilla mexicana", portion: "1 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Cereales" },
+  { name: "Taco mexicano vacío", portion: "1 unidad", carbs: 8, protein: 0, kcal: 0, cat: "Cereales" },
+  // ── Tubérculos nuevos ──
+  { name: "Arracacha", portion: "1/2 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Tubérculos" },
+  { name: "Guineo verde", portion: "1 unidad pequeña", carbs: 15, protein: 0, kcal: 0, cat: "Tubérculos" },
+  { name: "Ouyuco/Chuguas", portion: "7 unidades grandes", carbs: 15, protein: 0, kcal: 0, cat: "Tubérculos" },
+  // ── Leguminosas nuevas ──
+  { name: "Arveja seca cocida", portion: "1 taza", carbs: 30, protein: 0, kcal: 0, cat: "Leguminosas" },
+  { name: "Frijol rojo cocido", portion: "1 taza", carbs: 30, protein: 0, kcal: 0, cat: "Leguminosas" },
+  // ── Frutas nuevas ──
+  { name: "Anón", portion: "1 unidad pequeña", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Bananano bocadillo", portion: "1/2 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Chirimoya", portion: "1/2 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Chontaduro", portion: "1 unidad mediana", carbs: 2, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Ciruela común", portion: "3 unidades pequeñas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Ciruela importada", portion: "3 cdas postreras", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Ciruela pasa", portion: "6 unidades medianas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Coco", portion: "2 unidades pequeñas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Curuba", portion: "1 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Durazno nacional", portion: "2 unidades medianas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Durazno importado/Nectarín", portion: "13 unidades pequeñas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Feijoa", portion: "2 unidades medianas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Granadilla", portion: "2 unidades medianas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Guayaba", portion: "6 cdas soperas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Guanábana", portion: "3 unidades medianas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Higo", portion: "1 grande o 2 pequeñas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Mango de azúcar", portion: "3/4 taza", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Mango Tommy", portion: "1 unidad pequeña", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Moras", portion: "2 unidades pequeñas", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Níspero sin semillas", portion: "1 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Pera", portion: "1/2 taza picada", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Pitahaya", portion: "1 tajada delgada", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Tamarindo", portion: "2 unidades grandes", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Tomate de árbol", portion: "1 unidad grande", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Toronja", portion: "13 unidades", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Uchuva", portion: "20 unidades", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Uva nacional", portion: "1 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  { name: "Zapote", portion: "1 unidad mediana", carbs: 15, protein: 0, kcal: 0, cat: "Frutas" },
+  // ── Lácteos nuevos ──
+  { name: "Leche semi/descremada", portion: "1 vaso 200ml", carbs: 10, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Leche deslactosada", portion: "1 vaso 200ml", carbs: 10, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Leche en polvo entera", portion: "3 cdas colmadas", carbs: 10, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Yogurt Slight Colanta", portion: "1 vaso 200ml", carbs: 12, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Yogurt Benecol", portion: "1 unidad 100ml", carbs: 4, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Avena Finesse", portion: "1 vaso 250ml", carbs: 15, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Yogurt Pasco sin azúcar", portion: "1 vaso 150ml", carbs: 5, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Yogurt San Fernando Light", portion: "1 vaso 160ml", carbs: 10, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Yogurt Slim Natural Doña Leche", portion: "1 vaso 200ml", carbs: 12, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Yogurt Dietético Coolechera", portion: "1 vaso 150ml", carbs: 10, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Helado Light Mimos", portion: "1 bola 70g", carbs: 18, protein: 0, kcal: 0, cat: "Lácteos" },
+  { name: "Paleta Light Robin Hood", portion: "1 unidad 60g", carbs: 20, protein: 0, kcal: 0, cat: "Lácteos" },
+  // ── Alimentos procesados nuevos ──
+  { name: "Arroz con pollo", portion: "1 taza", carbs: 38, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Pizza Zenú", portion: "1 tajada mediana", carbs: 35, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Lasaña Zenú", portion: "1 porción mediana", carbs: 47, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Hamburguesa pan Bimbo", portion: "1 unidad mediana", carbs: 45, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Nuggets de pollo Zenú", portion: "5 unidades", carbs: 14, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Aborrajado sin bocadillo Kalisto", portion: "1 unidad pequeña", carbs: 20, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Tamal santandereano sin hojas", portion: "1 unidad mediana", carbs: 75, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Tamal tolimense sin hojas", portion: "1 unidad mediana", carbs: 60, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Salvado de trigo", portion: "5 cdas rasas", carbs: 30, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "All Bran", portion: "6 cdas", carbs: 21, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Tostada Bimbo", portion: "2 unidades", carbs: 4, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Paleta en agua Mimos Light", portion: "1 unidad 25g", carbs: 12, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Papas fritas Margarita", portion: "1 paquete 19g", carbs: 13, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Rosquitas Cronch", portion: "1 paquete 28g", carbs: 20, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Tajaditas plátano verde Natuchips", portion: "1 paquete", carbs: 3, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Insta Crem", portion: "1 sobre", carbs: 3, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Choco Lyne", portion: "1 pastilla", carbs: 2, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Choco Lyne/Choco Express", portion: "1 paquete 50g", carbs: 10, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Maní", portion: "1 paquete 40g", carbs: 10, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Marañón", portion: "1 paquete 50g", carbs: 11, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Mezcla de nueces", portion: "1 paquete 23g", carbs: 16, protein: 0, kcal: 0, cat: "Personalizados" },
+  { name: "Barra granola Sport Lyne", portion: "1 unidad 25g", carbs: 13.5, protein: 0, kcal: 0, cat: "Personalizados" },
 ];
 
 const CATS = ["Recientes","Todos","Cereales","Tubérculos","Frutas","Leguminosas","Lácteos","Carnes","Pescados","Verduras","Bebidas","Personalizados"];
@@ -686,12 +793,20 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     for (const r of records) {
       if (!r.insulin || r.insulin <= 0) continue;
       try {
-        const [day, month, year] = r.date.split("/");
-        const [hours, minutes] = r.time.split(":");
-        const doseTime = new Date(year, month-1, day, hours, minutes);
+        const dateParts = r.date ? r.date.split("/") : [];
+        const timeParts = r.time ? r.time.split(":") : [];
+        if (dateParts.length < 3 || timeParts.length < 2) continue;
+        const [day, month, year] = dateParts;
+        const [hours, minutes] = timeParts;
+        const doseTime = new Date(
+          parseInt(year), parseInt(month)-1, parseInt(day),
+          parseInt(hours), parseInt(minutes)
+        );
+        if (isNaN(doseTime.getTime())) continue;
         const minutesAgo = (now - doseTime) / 60000;
         if (minutesAgo < 0 || minutesAgo >= 240) continue;
-        iob += r.insulin * insulinActivePercent(minutesAgo);
+        const active = insulinActivePercent(minutesAgo);
+        iob += r.insulin * active;
       } catch {}
     }
     return Math.max(0, Math.round(iob * 10) / 10);
@@ -705,17 +820,19 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     const corr = g ? Math.max(0,(g-settings.objetivo)/settings.sensitivity) : 0;
     const meal = totalCarbs/currentRatio;
     const rawTotal = corr + meal;
-    const afterIOB = Math.max(0, rawTotal - iob);
+    const safeIob = isNaN(iob) ? 0 : iob;
+    const afterIOB = Math.max(0, rawTotal - safeIob);
     const exerciseReduction = exercise > 0 ? afterIOB * (exercise/100) : 0;
     const netTotal = Math.max(0, afterIOB - exerciseReduction);
+    if (isNaN(netTotal)) return null;
     return {
       corr:corr.toFixed(1),
       meal:meal.toFixed(1),
       raw:rawTotal.toFixed(1),
       total:Math.round(netTotal),
       netExact:netTotal.toFixed(1),
-      iob,
-      iobDeducted: iob > 0 && rawTotal > 0,
+      iob:safeIob,
+      iobDeducted: safeIob > 0 && rawTotal > 0,
       exercise,
       exerciseReduction: exerciseReduction.toFixed(1),
       ratio:currentRatio
@@ -1122,14 +1239,14 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
               <div style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:10}}>🏃 ¿Vas a hacer ejercicio?</div>
               <div style={{display:"flex",gap:8}}>
                 {[
-                  {label:"No",    value:0,  color:C.muted},
+                  {label:"No",         value:0,  color:"#6b7280"},
                   {label:"Leve −10%",  value:10, color:"#0ea5e9"},
                   {label:"Moderado −20%", value:20, color:"#f97316"},
                   {label:"Intenso −30%",  value:30, color:"#ef4444"},
                 ].map(opt => (
                   <button key={opt.value} onClick={()=>setExercise(opt.value)}
                     style={{
-                      flex:1, border:`1.5px solid ${exercise===opt.value?opt.color:C.border}`,
+                      flex:1, border:`1.5px solid ${exercise===opt.value ? opt.color : C.border}`,
                       background: exercise===opt.value ? opt.color+"18" : C.bg,
                       color: exercise===opt.value ? opt.color : C.muted,
                       borderRadius:10, padding:"7px 4px", fontSize:10, fontWeight:700, cursor:"pointer",
