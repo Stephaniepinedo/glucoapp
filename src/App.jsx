@@ -1139,11 +1139,9 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
             <div style={{background:"#eff6ff",border:"0.5px solid #bfdbfe",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:600,color:C.blue}}>
               Ratio: {currentRatio}g/U
             </div>
-            {iob>0 && (
-              <div style={{background:"#f5f3ff",border:"0.5px solid #ddd6fe",borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:600,color:C.purple}}>
-                Ins Act: {iob}U
-              </div>
-            )}
+            <div style={{background:iob>0?"#f5f3ff":"#f8fafc",border:`0.5px solid ${iob>0?"#ddd6fe":C.border}`,borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:600,color:iob>0?C.purple:C.muted}}>
+              Ins Act: {iob}U
+            </div>
           </div>
         </div>
       </div>
