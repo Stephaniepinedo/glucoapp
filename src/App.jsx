@@ -170,6 +170,14 @@ const FOODS = [
   { name: "Chocolate Luker", portion: "1 porción", carbs: 2, protein: 1, kcal: 30, cat: "Personalizados" },
   { name: "Whey Protein Nutramerican", portion: "1/2 scoop 26g", carbs: 1.2, protein: 20, kcal: 93, cat: "Personalizados" },
   { name: "Whey Protein Nutramerican", portion: "1 scoop 40g", carbs: 2.4, protein: 40, kcal: 186, cat: "Personalizados" },
+  { name: "Salchicha de Pavo Gwalthney", portion: "1/2 salchicha 28g", carbs: 2, protein: 3, kcal: 52, cat: "Personalizados" },
+  { name: "Salchicha de Pavo Gwalthney", portion: "1 salchicha 56g", carbs: 4, protein: 6, kcal: 104, cat: "Personalizados" },
+  { name: "Pasta El Dorado", portion: "1/4 taza 64g", carbs: 52, protein: 4.3, kcal: 224, cat: "Personalizados" },
+  { name: "Atún a las finas hierbas", portion: "1 porción 52g", carbs: 0.7, protein: 13, kcal: 99, cat: "Personalizados" },
+  { name: "Maní Mix La Especial", portion: "1 sobre 35g", carbs: 13, protein: 6.1, kcal: 191, cat: "Personalizados" },
+  { name: "Jamón de Cerdo Pietrán", portion: "2 tajadas 42g", carbs: 3.8, protein: 6, kcal: 49, cat: "Personalizados" },
+  { name: "Queso Finesse Alpina", portion: "2 tajadas 30g", carbs: 0.6, protein: 7.8, kcal: 88, cat: "Personalizados" },
+  { name: "Tortilla Rap Bimbo", portion: "1 unidad 29g", carbs: 16, protein: 2.6, kcal: 83, cat: "Personalizados" },
   { name: "Cereal Crispies The Protein Choice", portion: "1/4 sobre 50g", carbs: 23, protein: 10, kcal: 165, cat: "Personalizados" },
   { name: "Cereal Crispies The Protein Choice", portion: "100g", carbs: 46, protein: 20, kcal: 330, cat: "Personalizados" },
   { name: "Yogurt Griego San Martín", portion: "1/2 vaso 110ml", carbs: 4.6, protein: 7, kcal: 46, cat: "Personalizados" },
@@ -530,6 +538,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const [saved, setSaved] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [withToujeo, setWithToujeo] = useState(false);
+  const [exercise, setExercise] = useState(0); // 0=ninguno, 10=leve, 20=moderado, 30=intenso
   const [newMed, setNewMed] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
@@ -655,12 +664,62 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     return Math.round(val);
   })();
 
+  // ── IOB: Insulin On Board (Insulina Activa) ──
+  // Apidra DIA = 4 horas. Curva de acción trapezoidal estándar.
+  // % activo según minutos transcurridos desde la dosis
+  const insulinActivePercent = (minutesAgo) => {
+    const DIA = 240; // 4 horas en minutos
+    if (minutesAgo >= DIA) return 0;
+    if (minutesAgo <= 0) return 1;
+    // Curva trapezoidal: sube rápido, meseta, baja gradual
+    const peak = 75; // pico a los 75 min
+    if (minutesAgo <= peak) {
+      return 1 - (minutesAgo / peak) * 0.3; // baja 30% hasta el pico
+    }
+    // Después del pico baja linealmente hasta 0
+    return 0.7 * (1 - (minutesAgo - peak) / (DIA - peak));
+  };
+
+  const calcIOB = () => {
+    const now = new Date();
+    let iob = 0;
+    for (const r of records) {
+      if (!r.insulin || r.insulin <= 0) continue;
+      try {
+        const [day, month, year] = r.date.split("/");
+        const [hours, minutes] = r.time.split(":");
+        const doseTime = new Date(year, month-1, day, hours, minutes);
+        const minutesAgo = (now - doseTime) / 60000;
+        if (minutesAgo < 0 || minutesAgo >= 240) continue;
+        iob += r.insulin * insulinActivePercent(minutesAgo);
+      } catch {}
+    }
+    return Math.max(0, Math.round(iob * 10) / 10);
+  };
+
+  const iob = calcIOB();
+
   const calc = () => {
     const g = parseFloat(glucose);
     if (!g && totalCarbs===0) return null;
     const corr = g ? Math.max(0,(g-settings.objetivo)/settings.sensitivity) : 0;
     const meal = totalCarbs/currentRatio;
-    return { corr:corr.toFixed(1), meal:meal.toFixed(1), raw:(corr+meal).toFixed(1), total:Math.round(corr+meal), ratio:currentRatio };
+    const rawTotal = corr + meal;
+    const afterIOB = Math.max(0, rawTotal - iob);
+    const exerciseReduction = exercise > 0 ? afterIOB * (exercise/100) : 0;
+    const netTotal = Math.max(0, afterIOB - exerciseReduction);
+    return {
+      corr:corr.toFixed(1),
+      meal:meal.toFixed(1),
+      raw:rawTotal.toFixed(1),
+      total:Math.round(netTotal),
+      netExact:netTotal.toFixed(1),
+      iob,
+      iobDeducted: iob > 0 && rawTotal > 0,
+      exercise,
+      exerciseReduction: exerciseReduction.toFixed(1),
+      ratio:currentRatio
+    };
   };
   const result = calc();
 
@@ -749,7 +808,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         setSyncing(false);
         setTimeout(() => setSyncMsg(""), 2500);
         setSaved(true);
-        setTimeout(() => { setGlucose(""); setFoods([]); setWithToujeo(false); setSaved(false); }, 1800);
+        setTimeout(() => { setGlucose(""); setFoods([]); setWithToujeo(false); setExercise(0); setSaved(false); }, 1800);
       } catch (e) {
         setSyncing(false);
         setSyncMsg("⚠️ No se pudo guardar en OneDrive. Intenta de nuevo.");
@@ -1058,24 +1117,58 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
               </button>
             </div>
 
+            {/* Ejercicio */}
+            <div style={{background:C.card,borderRadius:16,padding:"12px 16px",marginBottom:12}}>
+              <div style={{fontSize:13,fontWeight:700,color:C.text,marginBottom:10}}>🏃 ¿Vas a hacer ejercicio?</div>
+              <div style={{display:"flex",gap:8}}>
+                {[
+                  {label:"No",    value:0,  color:C.muted},
+                  {label:"Leve −10%",  value:10, color:"#0ea5e9"},
+                  {label:"Moderado −20%", value:20, color:"#f97316"},
+                  {label:"Intenso −30%",  value:30, color:"#ef4444"},
+                ].map(opt => (
+                  <button key={opt.value} onClick={()=>setExercise(opt.value)}
+                    style={{
+                      flex:1, border:`1.5px solid ${exercise===opt.value?opt.color:C.border}`,
+                      background: exercise===opt.value ? opt.color+"18" : C.bg,
+                      color: exercise===opt.value ? opt.color : C.muted,
+                      borderRadius:10, padding:"7px 4px", fontSize:10, fontWeight:700, cursor:"pointer",
+                      textAlign:"center"
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Resultado */}
             {result && !saved && (
               <div style={{background:"#eff6ff",border:"1.5px solid #bfdbfe",borderRadius:20,padding:20,marginBottom:12}}>
-                <div style={{fontSize:11,color:C.blue,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>💉 DOSIS APIDRA</div>
+                <div style={{fontSize:11,color:C.blue,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>💉 DOSIS {(settings.insulinaRapida||"APIDRA").toUpperCase()}</div>
                 <div style={{display:"flex",alignItems:"baseline",gap:6,marginBottom:4}}>
                   <span style={{fontSize:68,fontWeight:700,color:C.blue,fontFamily:"monospace",lineHeight:1}}>{result.total}</span>
                   <span style={{fontSize:24,color:C.blue,paddingBottom:8}}>U</span>
                 </div>
-                <div style={{fontSize:12,color:C.muted,marginBottom:16}}>Exacto: {result.raw}U → {result.total}U · Ratio: {result.ratio}g/U</div>
-                <div style={{display:"flex",gap:10,marginBottom:16}}>
+                <div style={{fontSize:12,color:C.muted,marginBottom:result.iobDeducted?8:16}}>
+                  Exacto: {result.raw}U → {result.total}U · Ratio: {result.ratio}g/U
+                </div>
+                {result.iobDeducted && (
+                  <div style={{background:"#f5f3ff",border:"1px solid #e9d5ff",borderRadius:10,padding:"8px 12px",marginBottom:16,fontSize:12}}>
+                    <span style={{color:C.purple,fontWeight:700}}>−{result.iob}U IOB descontado</span>
+                    <span style={{color:C.muted}}> · Sin IOB serían {result.raw}U</span>
+                  </div>
+                )}
+                <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
                   {[
-                    {label:"Corrección",val:result.corr+"U",sub:"por glucemia"},
-                    {label:"Comida",val:result.meal+"U",sub:`${totalCarbs.toFixed(1)}g ÷ ${result.ratio}`},
-                  ].map((x,i) => (
-                    <div key={i} style={{flex:1,background:"#dbeafe",borderRadius:14,padding:"10px 14px"}}>
-                      <div style={{fontSize:9,color:C.blue,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>{x.label}</div>
-                      <div style={{fontSize:22,fontWeight:700,fontFamily:"monospace",color:C.text}}>{x.val}</div>
-                      <div style={{fontSize:10,color:C.muted}}>{x.sub}</div>
+                    {label:"Corrección", val:result.corr+"U", sub:"glucemia",    bg:"#dbeafe", color:C.blue},
+                    {label:"Comida",     val:result.meal+"U", sub:`${totalCarbs.toFixed(1)}g÷${result.ratio}`, bg:"#dbeafe", color:C.blue},
+                    ...(result.iobDeducted ? [{label:"IOB",val:"−"+result.iob+"U",sub:"activo",bg:"#f5f3ff",color:C.purple}] : []),
+                    ...(result.exercise>0  ? [{label:`Ejr −${result.exercise}%`,val:"−"+result.exerciseReduction+"U",sub:"actividad",bg:"#fff7ed",color:"#f97316"}] : []),
+                  ].map((x,i)=>(
+                    <div key={i} style={{flex:"1 1 80px",background:x.bg,borderRadius:12,padding:"8px 10px"}}>
+                      <div style={{fontSize:9,color:x.color,fontWeight:700,textTransform:"uppercase",letterSpacing:0.8,marginBottom:3}}>{x.label}</div>
+                      <div style={{fontSize:15,fontWeight:700,color:x.color,fontFamily:"monospace"}}>{x.val}</div>
+                      <div style={{fontSize:9,color:"#9ca3af",marginTop:1}}>{x.sub}</div>
                     </div>
                   ))}
                 </div>
@@ -1274,6 +1367,94 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                 );
               })()}
 
+              {/* 5-day macro table */}
+              {(() => {
+                const today = new Date();
+                const last5 = Array.from({length:5}, (_,i) => {
+                  const d = new Date(today);
+                  d.setDate(d.getDate() - (4-i));
+                  return {
+                    date: `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`,
+                    label: ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()],
+                    isToday: i===4,
+                  };
+                });
+
+                const dayTotalsMap = {};
+                for (const r of records) {
+                  if (!dayTotalsMap[r.date]) dayTotalsMap[r.date] = {carbs:0,protein:0,kcal:0};
+                  dayTotalsMap[r.date].carbs   += parseFloat(r.carbs||0);
+                  dayTotalsMap[r.date].protein += parseFloat(r.protein||0);
+                  dayTotalsMap[r.date].kcal    += parseFloat(r.kcal||0);
+                }
+
+                const hasAnyData = last5.some(d => dayTotalsMap[d.date]);
+                if (!hasAnyData) return null;
+
+                const Check = () => <span style={{color:"#16a34a",fontWeight:700,fontSize:14}}>✓</span>;
+                const Cross = () => <span style={{color:"#ef4444",fontWeight:700,fontSize:14}}>✗</span>;
+
+                return (
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:14}}>📅 ÚLTIMOS 5 DÍAS</div>
+                    <div style={{overflowX:"auto"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                        <thead>
+                          <tr>
+                            <th style={{textAlign:"left",padding:"4px 6px",color:C.muted,fontWeight:600,width:60}}>Día</th>
+                            <th style={{textAlign:"center",padding:"4px 4px",color:"#38bdf8",fontWeight:600}}>Carbs</th>
+                            <th style={{textAlign:"center",padding:"4px 4px",color:"#f97316",fontWeight:600}}>Prot</th>
+                            <th style={{textAlign:"center",padding:"4px 4px",color:C.orange,fontWeight:600}}>Kcal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {last5.map((d,i) => {
+                            const tot = dayTotalsMap[d.date];
+                            const empty = !tot;
+                            const carbs   = tot ? Math.round(tot.carbs)   : 0;
+                            const protein = tot ? Math.round(tot.protein)  : 0;
+                            const kcal    = tot ? Math.round(tot.kcal)    : 0;
+                            return (
+                              <tr key={i} style={{borderTop:`1px solid ${C.border}`,background:d.isToday?"#f8faff":"transparent"}}>
+                                <td style={{padding:"8px 6px",fontWeight:d.isToday?700:500,color:d.isToday?C.blue:C.text}}>
+                                  {d.label}{d.isToday?" 🔵":""}
+                                </td>
+                                {empty ? (
+                                  <td colSpan={3} style={{textAlign:"center",color:C.muted,padding:"8px 4px",fontSize:11}}>Sin datos</td>
+                                ) : (
+                                  <>
+                                    <td style={{textAlign:"center",padding:"8px 4px"}}>
+                                      <div style={{fontSize:12,color:C.text}}>{carbs}g</div>
+                                      <div style={{marginTop:2}}>{carbs<=metaCarbs ? <Check/> : <Cross/>}</div>
+                                    </td>
+                                    <td style={{textAlign:"center",padding:"8px 4px"}}>
+                                      <div style={{fontSize:12,color:C.text}}>{protein}g</div>
+                                      <div style={{marginTop:2}}>{protein>=metaProtein ? <Check/> : <Cross/>}</div>
+                                    </td>
+                                    <td style={{textAlign:"center",padding:"8px 4px"}}>
+                                      <div style={{fontSize:12,color:C.text}}>{kcal}</div>
+                                      <div style={{marginTop:2}}>{kcal<=metaKcal ? <Check/> : <Cross/>}</div>
+                                    </td>
+                                  </>
+                                )}
+                              </tr>
+                            );
+                          })}
+                          {/* Meta row */}
+                          <tr style={{borderTop:`2px solid ${C.border}`,background:"#f8fafc"}}>
+                            <td style={{padding:"6px 6px",fontSize:11,color:C.muted,fontWeight:600}}>Meta</td>
+                            <td style={{textAlign:"center",padding:"6px 4px",fontSize:11,color:"#38bdf8",fontWeight:600}}>{metaCarbs}g</td>
+                            <td style={{textAlign:"center",padding:"6px 4px",fontSize:11,color:"#f97316",fontWeight:600}}>{metaProtein}g</td>
+                            <td style={{textAlign:"center",padding:"6px 4px",fontSize:11,color:C.orange,fontWeight:600}}>{metaKcal}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{fontSize:10,color:C.muted,marginTop:8}}>✓ cumple meta · ✗ fuera de meta · Proteína: ✓ si alcanza o supera la meta</div>
+                  </div>
+                );
+              })()}
+
               {weeklyData.length === 0 ? (
                 <div style={{textAlign:"center",padding:40,color:C.muted}}>
                   <div style={{fontSize:40,marginBottom:12}}>📊</div>
@@ -1296,27 +1477,50 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                           <ProgressBar label="Proteína" value={last.protein} meta={metaProtein} color={C.green} unit="g" />
                           <ProgressBar label="Calorías" value={last.kcal} meta={metaKcal} color={C.orange} unit="" />
                           <div style={{borderTop:`1px solid ${C.border}`,marginTop:4,paddingTop:14}}>
-                            <div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:10}}>💉 {settings.insulinaRapida||"Insulina rápida"}</div>
-                            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                              {(() => {
-                                const allInsulin = weeklyData.map(w=>w.insulin);
-                                const lastWeekRecords = records.filter(r => {
-                                  try { return getWeekKey(parseDate(r.date)) === weeks[weeks.length-1][0]; } catch { return false; }
-                                });
-                                const weekTotal = Math.round(lastWeekRecords.reduce((s,r)=>s+(r.insulin||0),0));
-                                return [
-                                  {label:"Promedio", value: Math.round(last.insulin*10)/10+"U"},
-                                  {label:"Mínimo",   value: Math.round(Math.min(...allInsulin)*10)/10+"U"},
-                                  {label:"Máximo",   value: Math.round(Math.max(...allInsulin)*10)/10+"U"},
-                                  {label:"Total sem",value: weekTotal+"U"},
-                                ].map(({label,value})=>(
-                                  <div key={label} style={{background:"#f8fafc",borderRadius:10,padding:"10px 8px",textAlign:"center"}}>
-                                    <div style={{fontSize:10,color:C.muted,marginBottom:4}}>{label}</div>
-                                    <div style={{fontSize:18,fontWeight:700,color:C.purple}}>{value}</div>
-                                  </div>
-                                ));
-                              })()}
-                            </div>
+                            <div style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:12}}>💉 {settings.insulinaRapida||"Insulina rápida"} — últimos 7 días</div>
+                            {(() => {
+                              // Get last 7 days
+                              const today = new Date();
+                              const days7 = Array.from({length:7}, (_,i) => {
+                                const d = new Date(today);
+                                d.setDate(d.getDate() - (6-i));
+                                return {
+                                  date: `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`,
+                                  label: ["D","L","M","X","J","V","S"][d.getDay()],
+                                  isToday: i===6,
+                                };
+                              });
+                              const dayMap = {};
+                              for (const r of records) {
+                                if (!dayMap[r.date]) dayMap[r.date] = 0;
+                                dayMap[r.date] += (r.insulin||0);
+                              }
+                              const vals = days7.map(d => ({...d, value: Math.round((dayMap[d.date]||0)*10)/10}));
+                              const maxVal = Math.max(...vals.map(v=>v.value), 1);
+                              return (
+                                <div style={{display:"flex",alignItems:"flex-end",gap:6,height:90}}>
+                                  {vals.map((d,i) => (
+                                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                                      <div style={{fontSize:9,color:d.value>0?C.purple:C.muted,marginBottom:3,fontWeight:600}}>
+                                        {d.value>0?d.value+"U":""}
+                                      </div>
+                                      <div style={{width:"100%",height:64,display:"flex",alignItems:"flex-end"}}>
+                                        <div style={{
+                                          width:"100%",
+                                          height: d.value>0 ? `${Math.max((d.value/maxVal)*100,4)}%` : "3px",
+                                          background: d.isToday ? C.purple : d.value>0 ? "#a78bfa" : "#f1f5f9",
+                                          borderRadius:"4px 4px 0 0",
+                                          transition:"height 0.4s"
+                                        }}/>
+                                      </div>
+                                      <div style={{fontSize:9,color:d.isToday?C.purple:C.muted,marginTop:4,fontWeight:d.isToday?700:400}}>
+                                        {d.label}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </>
                       );
