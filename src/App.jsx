@@ -773,6 +773,36 @@ const appendRow = async (fileId, row) => {
     );
   }
 };
+// Rewrite the full Registros sheet from the current in-memory records —
+// used when deleting a single record (e.g. an accidental duplicate), since
+// there's no reliable single-row-delete against a plain range. `recordsList`
+// is most-recent-first (as kept in React state); write back oldest-first to
+// match the original append order, and blank out any leftover rows if the
+// list got shorter.
+const rewriteAllRecordsToOneDrive = async (fileId, recordsList) => {
+  try {
+    const chronological = [...recordsList].reverse();
+    let prevRows = 0;
+    try {
+      const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
+      prevRows = Math.max((used.values?.length || 1) - 1, 0);
+    } catch {}
+    if (chronological.length > 0) {
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A2:I${1+chronological.length}')`,
+        { values: chronological.map(r => [r.date, r.time, r.glucose, r.carbs, r.protein, r.kcal, r.insulin, r.foods, r.toujeo]) }
+      );
+    }
+    if (prevRows > chronological.length) {
+      const clearCount = prevRows - chronological.length;
+      const blank = Array.from({length:clearCount}, () => ["","","","","","","","",""]);
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A${2+chronological.length}:I${1+prevRows}')`,
+        { values: blank }
+      );
+    }
+  } catch {}
+};
 // ── Local cache (best-effort only — NOT the source of truth) ──
 const STORAGE_KEY = "glucoapp-records";
 const cacheRecords = (recs) => {
@@ -999,7 +1029,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     return allFoods.filter(f =>
       f.name.toLowerCase().includes(search.toLowerCase()) &&
       (cat === "Todos" || f.cat === cat)
-    );
+    ).sort((a,b) => a.name.localeCompare(b.name, 'es'));
   })();
   const totalCarbs   = foods.reduce((s,f) => s + f.carbs*f.qty, 0);
   const totalProtein = foods.reduce((s,f) => s + (f.protein||0)*f.qty, 0);
@@ -1230,6 +1260,17 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
     setWeightInput("");
     setWeightSaved(true);
     setTimeout(() => setWeightSaved(false), 2000);
+  };
+  // Delete a single record (e.g. an accidental duplicate) from Historial.
+  // Updates local state immediately, then rewrites the Registros sheet in
+  // OneDrive so the deletion sticks (OneDrive is the source of truth).
+  const deleteRecord = (id) => {
+    const updated = records.filter(r => r.id !== id);
+    setRecords(updated);
+    cacheRecords(updated);
+    if (msToken && fileId && odStatus==="ready") {
+      rewriteAllRecordsToOneDrive(fileId, updated).catch(()=>{});
+    }
   };
   const todayStr  = new Date().toLocaleDateString("es-CO");
   const todayRecs = records.filter(r => r.date===todayStr);
@@ -1738,6 +1779,82 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                   })}
                 </div>
               </div>
+              {/* Carbs y proteína por momento del día (Mañana/Tarde/Noche), solo de
+                  HOY — usa los mismos horarios definidos en Ratio I:C, y se rellena
+                  a lo largo del día a medida que registras comidas. */}
+              {(() => {
+                const periods = settings.ratios.map(r => {
+                  const [fh,fm] = parseRatioTime(r.from);
+                  const [th,tm] = parseRatioTime(r.to);
+                  const from = fh*60+fm;
+                  const to = (th===0 && tm===0) ? 24*60 : th*60+tm;
+                  return { label:r.label, from, to, carbs:0, protein:0 };
+                });
+                const parseTimeToMinutes = (t) => {
+                  if (!t) return null;
+                  const m = String(t).match(/(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?/i);
+                  if (m) {
+                    let h = parseInt(m[1]); const mi = parseInt(m[2]);
+                    const isPM = m[3].toLowerCase()==="p";
+                    if (isPM && h!==12) h+=12;
+                    if (!isPM && h===12) h=0;
+                    return h*60+mi;
+                  }
+                  const parts = String(t).split(":");
+                  if (parts.length<2) return null;
+                  const h = parseInt(parts[0]), mi = parseInt(parts[1]);
+                  if (isNaN(h)||isNaN(mi)) return null;
+                  return h*60+mi;
+                };
+                for (const r of todayRecs) {
+                  const mins = parseTimeToMinutes(r.time);
+                  if (mins === null) continue;
+                  const period = periods.find(p => mins>=p.from && mins<p.to) || periods[periods.length-1];
+                  period.carbs += parseFloat(r.carbs||0);
+                  period.protein += parseFloat(r.protein||0);
+                }
+                const hasData = periods.some(p => p.carbs>0 || p.protein>0);
+                if (!hasData) return null;
+                const maxVal = Math.max(...periods.map(p=>Math.max(p.carbs,p.protein)), 1);
+                const chartH = 100;
+                return (
+                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:4}}>🍽️ CARBS Y PROTEÍNA POR MOMENTO DEL DÍA</div>
+                    <div style={{fontSize:11,color:C.muted,marginBottom:14}}>Hoy — para ver qué comida ajustar</div>
+                    <div style={{display:"flex",gap:14,marginBottom:10,fontSize:10}}>
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        <div style={{width:8,height:8,borderRadius:2,background:C.sky}}/>
+                        <span style={{color:C.muted}}>Carbohidratos (g)</span>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        <div style={{width:8,height:8,borderRadius:2,background:C.green}}/>
+                        <span style={{color:C.muted}}>Proteína (g)</span>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",alignItems:"flex-end",gap:16,height:chartH}}>
+                      {periods.map((p,i) => (
+                        <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%",justifyContent:"flex-end"}}>
+                          <div style={{display:"flex",alignItems:"flex-end",gap:4,width:"100%",height:"100%",justifyContent:"center"}}>
+                            <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
+                              {p.carbs>0 && <div style={{fontSize:9,color:C.sky,fontWeight:700,marginBottom:2}}>{Math.round(p.carbs)}</div>}
+                              <div style={{width:"100%",height:p.carbs>0?`${Math.max((p.carbs/maxVal)*100,4)}%`:"2px",background:C.sky,borderRadius:"3px 3px 0 0",transition:"height 0.4s"}}/>
+                            </div>
+                            <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
+                              {p.protein>0 && <div style={{fontSize:9,color:C.green,fontWeight:700,marginBottom:2}}>{Math.round(p.protein)}</div>}
+                              <div style={{width:"100%",height:p.protein>0?`${Math.max((p.protein/maxVal)*100,4)}%`:"2px",background:C.green,borderRadius:"3px 3px 0 0",transition:"height 0.4s"}}/>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{display:"flex",gap:16,marginTop:6}}>
+                      {periods.map((p,i) => (
+                        <div key={i} style={{flex:1,textAlign:"center",fontSize:10,color:C.text,fontWeight:600}}>{p.label}</div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {/* Macro distribution pie chart */}
               {(todayTot.carbs > 0 || todayTot.protein > 0) && (() => {
                 const total = todayTot.carbs + todayTot.protein;
@@ -1963,102 +2080,19 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                       </>
                     );
                   })()}
-                  {/* Carbs y proteína por momento del día (Mañana/Tarde/Noche) — usa
-                      los mismos horarios definidos en Ratio I:C, para ver qué comida
-                      ajustar */}
+                  {/* Historial semanal — solo la semana actual, no semanas pasadas */}
                   {weeklyData.length > 0 && (() => {
-                    const today = new Date();
-                    const last7Dates = new Set(Array.from({length:7}, (_,i) => {
-                      const d = new Date(today); d.setDate(d.getDate()-i);
-                      return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-                    }));
-                    const periods = settings.ratios.map(r => {
-                      const [fh,fm] = parseRatioTime(r.from);
-                      const [th,tm] = parseRatioTime(r.to);
-                      const from = fh*60+fm;
-                      const to = (th===0 && tm===0) ? 24*60 : th*60+tm;
-                      return { label:r.label, from, to, carbs:0, protein:0 };
-                    });
-                    const parseTimeToMinutes = (t) => {
-                      if (!t) return null;
-                      const m = String(t).match(/(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?/i);
-                      if (m) {
-                        let h = parseInt(m[1]); const mi = parseInt(m[2]);
-                        const isPM = m[3].toLowerCase()==="p";
-                        if (isPM && h!==12) h+=12;
-                        if (!isPM && h===12) h=0;
-                        return h*60+mi;
-                      }
-                      const parts = String(t).split(":");
-                      if (parts.length<2) return null;
-                      const h = parseInt(parts[0]), mi = parseInt(parts[1]);
-                      if (isNaN(h)||isNaN(mi)) return null;
-                      return h*60+mi;
-                    };
-                    for (const r of records) {
-                      if (!last7Dates.has(r.date)) continue;
-                      const mins = parseTimeToMinutes(r.time);
-                      if (mins === null) continue;
-                      const period = periods.find(p => mins>=p.from && mins<p.to) || periods[periods.length-1];
-                      period.carbs += parseFloat(r.carbs||0);
-                      period.protein += parseFloat(r.protein||0);
-                    }
-                    const hasData = periods.some(p => p.carbs>0 || p.protein>0);
-                    if (!hasData) return null;
-                    const maxVal = Math.max(...periods.map(p=>Math.max(p.carbs,p.protein)), 1);
-                    const chartH = 100;
+                    const w = weeklyData[weeklyData.length-1];
                     return (
                       <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                        <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:4}}>🍽️ CARBS Y PROTEÍNA POR MOMENTO DEL DÍA</div>
-                        <div style={{fontSize:11,color:C.muted,marginBottom:14}}>Total últimos 7 días — para ver qué comida ajustar</div>
-                        <div style={{display:"flex",gap:14,marginBottom:10,fontSize:10}}>
-                          <div style={{display:"flex",alignItems:"center",gap:4}}>
-                            <div style={{width:8,height:8,borderRadius:2,background:C.sky}}/>
-                            <span style={{color:C.muted}}>Carbohidratos (g)</span>
-                          </div>
-                          <div style={{display:"flex",alignItems:"center",gap:4}}>
-                            <div style={{width:8,height:8,borderRadius:2,background:C.green}}/>
-                            <span style={{color:C.muted}}>Proteína (g)</span>
-                          </div>
-                        </div>
-                        <div style={{display:"flex",alignItems:"flex-end",gap:16,height:chartH}}>
-                          {periods.map((p,i) => (
-                            <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%",justifyContent:"flex-end"}}>
-                              <div style={{display:"flex",alignItems:"flex-end",gap:4,width:"100%",height:"100%",justifyContent:"center"}}>
-                                <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
-                                  {p.carbs>0 && <div style={{fontSize:9,color:C.sky,fontWeight:700,marginBottom:2}}>{Math.round(p.carbs)}</div>}
-                                  <div style={{width:"100%",height:p.carbs>0?`${Math.max((p.carbs/maxVal)*100,4)}%`:"2px",background:C.sky,borderRadius:"3px 3px 0 0",transition:"height 0.4s"}}/>
-                                </div>
-                                <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
-                                  {p.protein>0 && <div style={{fontSize:9,color:C.green,fontWeight:700,marginBottom:2}}>{Math.round(p.protein)}</div>}
-                                  <div style={{width:"100%",height:p.protein>0?`${Math.max((p.protein/maxVal)*100,4)}%`:"2px",background:C.green,borderRadius:"3px 3px 0 0",transition:"height 0.4s"}}/>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{display:"flex",gap:16,marginTop:6}}>
-                          {periods.map((p,i) => (
-                            <div key={i} style={{flex:1,textAlign:"center",fontSize:10,color:C.text,fontWeight:600}}>{p.label}</div>
-                          ))}
-                        </div>
+                        <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:14}}>📅 SEMANA ACTUAL</div>
+                        <div style={{fontSize:12,fontWeight:600,color:C.text,marginBottom:8}}>Semana del {w.label} <span style={{color:C.muted,fontWeight:400}}>· {w.days} día{w.days!==1?"s":""}</span></div>
+                        <ProgressBar label="Carbs" value={w.carbs} meta={metaCarbs} color={C.sky} unit="g" />
+                        <ProgressBar label="Proteína" value={w.protein} meta={metaProtein} color={C.green} unit="g" />
+                        <ProgressBar label="Calorías" value={w.kcal} meta={metaKcal} color={C.orange} unit="" />
                       </div>
                     );
                   })()}
-                  {/* Historial por semanas */}
-                  {weeklyData.length > 1 && (
-                    <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                      <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:14}}>📅 HISTORIAL SEMANAL</div>
-                      {weeklyData.map((w,i) => (
-                        <div key={i} style={{marginBottom:16}}>
-                          <div style={{fontSize:12,fontWeight:600,color:C.text,marginBottom:8}}>Semana del {w.label} <span style={{color:C.muted,fontWeight:400}}>· {w.days} día{w.days!==1?"s":""}</span></div>
-                          <ProgressBar label="Carbs" value={w.carbs} meta={metaCarbs} color={C.sky} unit="g" />
-                          <ProgressBar label="Proteína" value={w.protein} meta={metaProtein} color={C.green} unit="g" />
-                          <ProgressBar label="Calorías" value={w.kcal} meta={metaKcal} color={C.orange} unit="" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
                   {/* Peso — al final */}
                   <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
                     <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:12}}>⚖️ PESO</div>
@@ -2217,11 +2251,15 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                     <div style={{background:C.bg,border:`1px solid ${C.border}`,borderTop:"none",borderRadius:"0 0 16px 16px",padding:"8px 12px 12px"}}>
                       {recs.map((r,i) => (
                         <div key={i} style={{background:C.card,borderRadius:12,padding:12,marginTop:8}}>
-                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                             <span style={{fontSize:12,color:C.muted}}>🕐 {r.time}</span>
-                            <span style={{fontSize:15,fontWeight:700,color:C.sky,fontFamily:"monospace"}}>
-                              {r.insulin}U {settings.insulinaRapida||"Rápida"}{r.toujeo>0 && <span style={{color:"#7c3aed"}}> · {r.toujeo}U {settings.insulinaLenta||"Lenta"}</span>}
-                            </span>
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <span style={{fontSize:15,fontWeight:700,color:C.sky,fontFamily:"monospace"}}>
+                                {r.insulin}U {settings.insulinaRapida||"Rápida"}{r.toujeo>0 && <span style={{color:"#7c3aed"}}> · {r.toujeo}U {settings.insulinaLenta||"Lenta"}</span>}
+                              </span>
+                              <button onClick={()=>{ if(window.confirm("¿Borrar este registro?")) deleteRecord(r.id); }}
+                                style={{background:C.red+"20",border:"none",color:C.red,borderRadius:8,width:26,height:26,fontSize:13,cursor:"pointer",flexShrink:0}}>🗑️</button>
+                            </div>
                           </div>
                           <div style={{display:"flex",gap:6,marginBottom:r.foods!=="-"?8:0}}>
                             {[
@@ -2255,7 +2293,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
             {customFoods.length>0 && (
               <div style={{marginBottom:20}}>
                 <div style={{fontSize:14,fontWeight:700,color:C.muted,marginBottom:12}}>Guardados permanentemente ({customFoods.length})</div>
-                {customFoods.map((f,i) => (
+                {customFoods.map((f,idx)=>({f,idx})).sort((a,b)=>a.f.name.localeCompare(b.f.name,'es')).map(({f,idx:i}) => (
                   <div key={i} style={{background:C.card,borderRadius:12,padding:"12px 14px",marginBottom:8}}>
                     {editingFood?.index===i ? (
                       // Edit mode
