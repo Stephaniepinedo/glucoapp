@@ -1787,89 +1787,6 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                   </div>
                 );
               })()}
-              {/* 5-day macro table */}
-              {(() => {
-                const today = new Date();
-                const last5 = Array.from({length:5}, (_,i) => {
-                  const d = new Date(today);
-                  d.setDate(d.getDate() - (4-i));
-                  return {
-                    date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`,
-                    label: ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()],
-                    isToday: i===4,
-                  };
-                });
-                const dayTotalsMap = {};
-                for (const r of records) {
-                  if (!dayTotalsMap[r.date]) dayTotalsMap[r.date] = {carbs:0,protein:0,kcal:0};
-                  dayTotalsMap[r.date].carbs   += parseFloat(r.carbs||0);
-                  dayTotalsMap[r.date].protein += parseFloat(r.protein||0);
-                  dayTotalsMap[r.date].kcal    += parseFloat(r.kcal||0);
-                }
-                const hasAnyData = last5.some(d => dayTotalsMap[d.date]);
-                if (!hasAnyData) return null;
-                const Check = () => <span style={{color:"#16a34a",fontWeight:700,fontSize:14}}>✓</span>;
-                const Cross = () => <span style={{color:"#ef4444",fontWeight:700,fontSize:14}}>✗</span>;
-                return (
-                  <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
-                    <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:14}}>📅 ÚLTIMOS 5 DÍAS</div>
-                    <div style={{overflowX:"auto"}}>
-                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                        <thead>
-                          <tr>
-                            <th style={{textAlign:"left",padding:"4px 6px",color:C.muted,fontWeight:600,width:60}}>Día</th>
-                            <th style={{textAlign:"center",padding:"4px 4px",color:"#38bdf8",fontWeight:600}}>Carbs</th>
-                            <th style={{textAlign:"center",padding:"4px 4px",color:"#f97316",fontWeight:600}}>Prot</th>
-                            <th style={{textAlign:"center",padding:"4px 4px",color:C.orange,fontWeight:600}}>Kcal</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {last5.map((d,i) => {
-                            const tot = dayTotalsMap[d.date];
-                            const empty = !tot;
-                            const carbs   = tot ? Math.round(tot.carbs)   : 0;
-                            const protein = tot ? Math.round(tot.protein)  : 0;
-                            const kcal    = tot ? Math.round(tot.kcal)    : 0;
-                            return (
-                              <tr key={i} style={{borderTop:`1px solid ${C.border}`,background:d.isToday?"#f8faff":"transparent"}}>
-                                <td style={{padding:"8px 6px",fontWeight:d.isToday?700:500,color:d.isToday?C.blue:C.text}}>
-                                  {d.label}{d.isToday?" 🔵":""}
-                                </td>
-                                {empty ? (
-                                  <td colSpan={3} style={{textAlign:"center",color:C.muted,padding:"8px 4px",fontSize:11}}>Sin datos</td>
-                                ) : (
-                                  <>
-                                    <td style={{textAlign:"center",padding:"8px 4px"}}>
-                                      <div style={{fontSize:12,color:C.text}}>{carbs}g</div>
-                                      <div style={{marginTop:2}}>{carbs<=metaCarbs ? <Check/> : <Cross/>}</div>
-                                    </td>
-                                    <td style={{textAlign:"center",padding:"8px 4px"}}>
-                                      <div style={{fontSize:12,color:C.text}}>{protein}g</div>
-                                      <div style={{marginTop:2}}>{protein>=metaProtein ? <Check/> : <Cross/>}</div>
-                                    </td>
-                                    <td style={{textAlign:"center",padding:"8px 4px"}}>
-                                      <div style={{fontSize:12,color:C.text}}>{kcal}</div>
-                                      <div style={{marginTop:2}}>{kcal<=metaKcal ? <Check/> : <Cross/>}</div>
-                                    </td>
-                                  </>
-                                )}
-                              </tr>
-                            );
-                          })}
-                          {/* Meta row */}
-                          <tr style={{borderTop:`2px solid ${C.border}`,background:"#f8fafc"}}>
-                            <td style={{padding:"6px 6px",fontSize:11,color:C.muted,fontWeight:600}}>Meta</td>
-                            <td style={{textAlign:"center",padding:"6px 4px",fontSize:11,color:"#38bdf8",fontWeight:600}}>{metaCarbs}g</td>
-                            <td style={{textAlign:"center",padding:"6px 4px",fontSize:11,color:"#f97316",fontWeight:600}}>{metaProtein}g</td>
-                            <td style={{textAlign:"center",padding:"6px 4px",fontSize:11,color:C.orange,fontWeight:600}}>{metaKcal}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div style={{fontSize:10,color:C.muted,marginTop:8}}>✓ cumple meta · ✗ fuera de meta · Proteína: ✓ si alcanza o supera la meta</div>
-                  </div>
-                );
-              })()}
               {weeklyData.length === 0 && weightLog.length === 0 ? (
                 <div style={{textAlign:"center",padding:40,color:C.muted}}>
                   <div style={{fontSize:40,marginBottom:12}}>📊</div>
@@ -1936,20 +1853,26 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                                     {vals.map((d,i) => (
                                       <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%",justifyContent:"flex-end"}}>
                                         <div style={{display:"flex",alignItems:"flex-end",gap:2,width:"100%",height:"100%",justifyContent:"center"}}>
-                                          <div title={`${d.rapida}U`} style={{
-                                            width:"38%",
-                                            height: d.rapida>0 ? `${Math.max((d.rapida/maxVal)*100,4)}%` : "2px",
-                                            background: d.isToday ? C.purple : "#a78bfa",
-                                            borderRadius:"3px 3px 0 0",
-                                            transition:"height 0.4s"
-                                          }}/>
-                                          <div title={`${d.lenta}U`} style={{
-                                            width:"38%",
-                                            height: d.lenta>0 ? `${Math.max((d.lenta/maxVal)*100,4)}%` : "2px",
-                                            background: d.isToday ? "#8b5cf6" : "#ddd6fe",
-                                            borderRadius:"3px 3px 0 0",
-                                            transition:"height 0.4s"
-                                          }}/>
+                                          <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
+                                            {d.rapida>0 && <div style={{fontSize:8,color:C.purple,fontWeight:700,marginBottom:2}}>{d.rapida}</div>}
+                                            <div title={`${d.rapida}U`} style={{
+                                              width:"100%",
+                                              height: d.rapida>0 ? `${Math.max((d.rapida/maxVal)*100,4)}%` : "2px",
+                                              background: d.isToday ? C.purple : "#a78bfa",
+                                              borderRadius:"3px 3px 0 0",
+                                              transition:"height 0.4s"
+                                            }}/>
+                                          </div>
+                                          <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
+                                            {d.lenta>0 && <div style={{fontSize:8,color:"#8b5cf6",fontWeight:700,marginBottom:2}}>{d.lenta}</div>}
+                                            <div title={`${d.lenta}U`} style={{
+                                              width:"100%",
+                                              height: d.lenta>0 ? `${Math.max((d.lenta/maxVal)*100,4)}%` : "2px",
+                                              background: d.isToday ? "#8b5cf6" : "#ddd6fe",
+                                              borderRadius:"3px 3px 0 0",
+                                              transition:"height 0.4s"
+                                            }}/>
+                                          </div>
                                         </div>
                                       </div>
                                     ))}
@@ -1993,7 +1916,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                       protein: Math.round(dayMacros[d.date]?.protein||0),
                       kcal:    Math.round(dayMacros[d.date]?.kcal||0),
                     }));
-                    const MacroChart = ({title, dataKey, color, meta, unit}) => {
+                    const MacroChart = ({title, dataKey, color, meta, unit, isGood}) => {
                       const maxVal = Math.max(...vals.map(v=>v[dataKey]), meta, 1);
                       const chartH = 90;
                       return (
@@ -2004,6 +1927,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                             <div style={{display:"flex",alignItems:"flex-end",gap:6,height:"100%"}}>
                               {vals.map((d,i) => (
                                 <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%",justifyContent:"flex-end"}}>
+                                  {d[dataKey]>0 && <div style={{fontSize:8,color,fontWeight:700,marginBottom:2}}>{d[dataKey]}</div>}
                                   <div title={`${d[dataKey]}${unit}`} style={{
                                     width:"70%",
                                     height: d[dataKey]>0 ? `${Math.max((d[dataKey]/maxVal)*100,4)}%` : "2px",
@@ -2020,16 +1944,105 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                               <div key={i} style={{flex:1,textAlign:"center",fontSize:9,color:d.isToday?color:C.muted,fontWeight:d.isToday?700:400}}>{d.label}</div>
                             ))}
                           </div>
+                          <div style={{display:"flex",gap:6,marginTop:2}}>
+                            {vals.map((d,i) => (
+                              <div key={i} style={{flex:1,textAlign:"center",fontSize:11}}>
+                                {d[dataKey]>0 ? (isGood(d[dataKey]) ? <span style={{color:"#16a34a",fontWeight:700}}>✓</span> : <span style={{color:"#ef4444",fontWeight:700}}>✗</span>) : ""}
+                              </div>
+                            ))}
+                          </div>
                           <div style={{fontSize:10,color:C.muted,marginTop:8}}>Meta: {meta}{unit}</div>
                         </div>
                       );
                     };
                     return (
                       <>
-                        <MacroChart title="🍞 Carbohidratos" dataKey="carbs" color={C.sky} meta={metaCarbs} unit="g" />
-                        <MacroChart title="🍗 Proteína" dataKey="protein" color={C.green} meta={metaProtein} unit="g" />
-                        <MacroChart title="🔥 Calorías" dataKey="kcal" color={C.orange} meta={metaKcal} unit="" />
+                        <MacroChart title="🍞 Carbohidratos" dataKey="carbs" color={C.sky} meta={metaCarbs} unit="g" isGood={v=>v<=metaCarbs} />
+                        <MacroChart title="🍗 Proteína" dataKey="protein" color={C.green} meta={metaProtein} unit="g" isGood={v=>v>=metaProtein} />
+                        <MacroChart title="🔥 Calorías" dataKey="kcal" color={C.orange} meta={metaKcal} unit="" isGood={v=>v<=metaKcal} />
                       </>
+                    );
+                  })()}
+                  {/* Carbs y proteína por momento del día (Mañana/Tarde/Noche) — usa
+                      los mismos horarios definidos en Ratio I:C, para ver qué comida
+                      ajustar */}
+                  {weeklyData.length > 0 && (() => {
+                    const today = new Date();
+                    const last7Dates = new Set(Array.from({length:7}, (_,i) => {
+                      const d = new Date(today); d.setDate(d.getDate()-i);
+                      return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                    }));
+                    const periods = settings.ratios.map(r => {
+                      const [fh,fm] = parseRatioTime(r.from);
+                      const [th,tm] = parseRatioTime(r.to);
+                      const from = fh*60+fm;
+                      const to = (th===0 && tm===0) ? 24*60 : th*60+tm;
+                      return { label:r.label, from, to, carbs:0, protein:0 };
+                    });
+                    const parseTimeToMinutes = (t) => {
+                      if (!t) return null;
+                      const m = String(t).match(/(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?/i);
+                      if (m) {
+                        let h = parseInt(m[1]); const mi = parseInt(m[2]);
+                        const isPM = m[3].toLowerCase()==="p";
+                        if (isPM && h!==12) h+=12;
+                        if (!isPM && h===12) h=0;
+                        return h*60+mi;
+                      }
+                      const parts = String(t).split(":");
+                      if (parts.length<2) return null;
+                      const h = parseInt(parts[0]), mi = parseInt(parts[1]);
+                      if (isNaN(h)||isNaN(mi)) return null;
+                      return h*60+mi;
+                    };
+                    for (const r of records) {
+                      if (!last7Dates.has(r.date)) continue;
+                      const mins = parseTimeToMinutes(r.time);
+                      if (mins === null) continue;
+                      const period = periods.find(p => mins>=p.from && mins<p.to) || periods[periods.length-1];
+                      period.carbs += parseFloat(r.carbs||0);
+                      period.protein += parseFloat(r.protein||0);
+                    }
+                    const hasData = periods.some(p => p.carbs>0 || p.protein>0);
+                    if (!hasData) return null;
+                    const maxVal = Math.max(...periods.map(p=>Math.max(p.carbs,p.protein)), 1);
+                    const chartH = 100;
+                    return (
+                      <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                        <div style={{fontSize:13,fontWeight:700,color:C.muted,marginBottom:4}}>🍽️ CARBS Y PROTEÍNA POR MOMENTO DEL DÍA</div>
+                        <div style={{fontSize:11,color:C.muted,marginBottom:14}}>Total últimos 7 días — para ver qué comida ajustar</div>
+                        <div style={{display:"flex",gap:14,marginBottom:10,fontSize:10}}>
+                          <div style={{display:"flex",alignItems:"center",gap:4}}>
+                            <div style={{width:8,height:8,borderRadius:2,background:C.sky}}/>
+                            <span style={{color:C.muted}}>Carbohidratos (g)</span>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:4}}>
+                            <div style={{width:8,height:8,borderRadius:2,background:C.green}}/>
+                            <span style={{color:C.muted}}>Proteína (g)</span>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",alignItems:"flex-end",gap:16,height:chartH}}>
+                          {periods.map((p,i) => (
+                            <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%",justifyContent:"flex-end"}}>
+                              <div style={{display:"flex",alignItems:"flex-end",gap:4,width:"100%",height:"100%",justifyContent:"center"}}>
+                                <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
+                                  {p.carbs>0 && <div style={{fontSize:9,color:C.sky,fontWeight:700,marginBottom:2}}>{Math.round(p.carbs)}</div>}
+                                  <div style={{width:"100%",height:p.carbs>0?`${Math.max((p.carbs/maxVal)*100,4)}%`:"2px",background:C.sky,borderRadius:"3px 3px 0 0",transition:"height 0.4s"}}/>
+                                </div>
+                                <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:"38%",height:"100%",justifyContent:"flex-end"}}>
+                                  {p.protein>0 && <div style={{fontSize:9,color:C.green,fontWeight:700,marginBottom:2}}>{Math.round(p.protein)}</div>}
+                                  <div style={{width:"100%",height:p.protein>0?`${Math.max((p.protein/maxVal)*100,4)}%`:"2px",background:C.green,borderRadius:"3px 3px 0 0",transition:"height 0.4s"}}/>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{display:"flex",gap:16,marginTop:6}}>
+                          {periods.map((p,i) => (
+                            <div key={i} style={{flex:1,textAlign:"center",fontSize:10,color:C.text,fontWeight:600}}>{p.label}</div>
+                          ))}
+                        </div>
+                      </div>
                     );
                   })()}
                   {/* Historial por semanas */}
