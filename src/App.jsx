@@ -699,7 +699,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
       saveCustomFoods(customFoods);
       if (fileId && odStatus === "ready") saveCustomFoodsToOneDrive(fileId, customFoods);
     }
-  }, [customFoods, customFoodsReady]);
+  }, [customFoods, customFoodsReady, fileId, odStatus]);
   // Token from OAuth popup is handled by msLogin callback — nothing to read from hash
   useEffect(() => {}, []);
   // Connect to OneDrive: find/create GlucoApp.xlsx, ensure "Registros" sheet+headers,
@@ -819,13 +819,29 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
       if (!r.insulin || r.insulin <= 0) continue;
       try {
         const dateParts = r.date ? r.date.split("/") : [];
-        const timeParts = r.time ? r.time.split(":") : [];
-        if (dateParts.length < 3 || timeParts.length < 2) continue;
+        if (dateParts.length < 3 || !r.time) continue;
         const [day, month, year] = dateParts;
-        const [hours, minutes] = timeParts;
+        // r.time is stored in 12-hour format (e.g. "08:14 p.m.") — parse
+        // it AM/PM-aware, since a naive split(":") previously ignored
+        // a.m./p.m. entirely and treated every dose as if taken in the
+        // morning, throwing IOB off by up to 12 hours.
+        const timeMatch = r.time.match(/(\d{1,2}):(\d{2})\s*([ap])\.?\s*m\.?/i);
+        let hours, minutes;
+        if (timeMatch) {
+          hours = parseInt(timeMatch[1]);
+          minutes = parseInt(timeMatch[2]);
+          const isPM = timeMatch[3].toLowerCase() === "p";
+          if (isPM && hours !== 12) hours += 12;
+          if (!isPM && hours === 12) hours = 0;
+        } else {
+          const timeParts = r.time.split(":");
+          if (timeParts.length < 2) continue;
+          hours = parseInt(timeParts[0]);
+          minutes = parseInt(timeParts[1]);
+        }
         const doseTime = new Date(
           parseInt(year), parseInt(month)-1, parseInt(day),
-          parseInt(hours), parseInt(minutes)
+          hours, minutes
         );
         if (isNaN(doseTime.getTime())) continue;
         const minutesAgo = (now - doseTime) / 60000;
