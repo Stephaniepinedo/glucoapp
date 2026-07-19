@@ -347,17 +347,33 @@ const DEFAULT_SETTINGS = {
   // Metas nutricionales diarias
   metaCarbs:130, metaProtein:85, metaKcal:1350,
 };
-const getCurrentRatio = (ratios) => {
-  const now = new Date();
-  const cur = now.getHours()*60 + now.getMinutes();
-  for (const r of ratios) {
-    const [fh,fm] = r.from.split(":").map(Number);
-    const [th,tm] = r.to.split(":").map(Number);
-    const from = fh*60+fm;
-    const to = th===0&&tm===0 ? 24*60 : th*60+tm;
-    if (cur>=from && cur<to) return r.ratio;
+// Defensive time parser: normally "from"/"to" are "HH:MM" strings, but if
+// Excel auto-converted the cell to its Time type, Graph API returns a
+// fraction-of-a-day number instead (e.g. 0.5 = 12:00) — handle both so a
+// malformed value never throws and blanks the whole app.
+const parseRatioTime = (t) => {
+  if (typeof t === "number") {
+    const totalMin = Math.round(t*24*60);
+    return [Math.floor(totalMin/60)%24, totalMin%60];
   }
-  return ratios[0].ratio;
+  const parts = String(t||"0:0").split(":");
+  return [parseInt(parts[0])||0, parseInt(parts[1])||0];
+};
+const getCurrentRatio = (ratios) => {
+  try {
+    const now = new Date();
+    const cur = now.getHours()*60 + now.getMinutes();
+    for (const r of ratios) {
+      const [fh,fm] = parseRatioTime(r.from);
+      const [th,tm] = parseRatioTime(r.to);
+      const from = fh*60+fm;
+      const to = th===0&&tm===0 ? 24*60 : th*60+tm;
+      if (cur>=from && cur<to) return r.ratio;
+    }
+    return ratios[0]?.ratio ?? DEFAULT_SETTINGS.ratios[0].ratio;
+  } catch {
+    return DEFAULT_SETTINGS.ratios[0].ratio;
+  }
 };
 // Shared request helper: attaches the current access token, and if Graph
 // responds 401 (expired token), silently refreshes once via the stored
@@ -417,13 +433,35 @@ const settingsToRow = (s) => {
     r[2].from, r[2].to, r[2].ratio,
   ];
 };
+// If Excel auto-converted a "HH:MM" text cell to its Time type, Graph API
+// returns a fraction-of-a-day number instead — turn it back into "HH:MM".
+const normalizeExcelTimeStr = (val) => {
+  if (val === null || val === undefined || val === "") return "";
+  if (typeof val === "number") {
+    const totalMin = Math.round(val*24*60);
+    const hh = Math.floor(totalMin/60)%24;
+    const mm = totalMin%60;
+    return `${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+  }
+  return String(val);
+};
+// Same idea for a "YYYY-MM-DD" text cell that got auto-converted to a Date.
+const normalizeExcelDateISO = (val) => {
+  if (val === null || val === undefined || val === "") return "";
+  if (typeof val === "number") {
+    const excelEpoch = Date.UTC(1899, 11, 30);
+    const d = new Date(excelEpoch + val*86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}-${String(d.getUTCDate()).padStart(2,"0")}`;
+  }
+  return String(val);
+};
 const rowToSettings = (row) => {
   const num = (v) => (v===undefined||v===null||v==="") ? undefined : Number(v);
   const labels = ["🌅 Mañana","☀️ Tarde","🌙 Noche"];
   const ratios = [0,1,2].map(i => ({
     label: labels[i],
-    from: row[18+i*3] || DEFAULT_SETTINGS.ratios[i].from,
-    to:   row[19+i*3] || DEFAULT_SETTINGS.ratios[i].to,
+    from: normalizeExcelTimeStr(row[18+i*3]) || DEFAULT_SETTINGS.ratios[i].from,
+    to:   normalizeExcelTimeStr(row[19+i*3]) || DEFAULT_SETTINGS.ratios[i].to,
     ratio: num(row[20+i*3]) ?? DEFAULT_SETTINGS.ratios[i].ratio,
   }));
   return {
@@ -436,7 +474,7 @@ const rowToSettings = (row) => {
     sexo: row[6] || DEFAULT_SETTINGS.sexo,
     pesoKg: num(row[7]) ?? DEFAULT_SETTINGS.pesoKg,
     alturaCm: num(row[8]) ?? DEFAULT_SETTINGS.alturaCm,
-    fechaNacimiento: row[9] || DEFAULT_SETTINGS.fechaNacimiento,
+    fechaNacimiento: normalizeExcelDateISO(row[9]) || DEFAULT_SETTINGS.fechaNacimiento,
     pesoMeta: num(row[10]) ?? DEFAULT_SETTINGS.pesoMeta,
     insulinaRapida: row[11] || DEFAULT_SETTINGS.insulinaRapida,
     insulinaLenta: row[12] || DEFAULT_SETTINGS.insulinaLenta,
@@ -684,6 +722,21 @@ const normalizeExcelDate = (val) => {
   }
   return String(val);
 };
+// Same problem, same fix, for the "Hora" column: Excel may have converted a
+// pasted "08:14 p.m." cell into its Time type (a fraction-of-a-day number).
+// calcIOB()'s regex expects a string, so this prevents another silent crash.
+const normalizeExcelTimeCell = (val) => {
+  if (val === null || val === undefined || val === "") return "";
+  if (typeof val === "number") {
+    const totalMin = Math.round(val*24*60);
+    const hh24 = Math.floor(totalMin/60)%24;
+    const mm = totalMin%60;
+    const isPM = hh24 >= 12;
+    let hh12 = hh24 % 12; if (hh12 === 0) hh12 = 12;
+    return `${String(hh12).padStart(2,"0")}:${String(mm).padStart(2,"0")} ${isPM?"p":"a"}. m.`;
+  }
+  return String(val);
+};
 const readAllRecords = async (fileId) => {
   const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
   const rows = used.values || [];
@@ -694,7 +747,7 @@ const readAllRecords = async (fileId) => {
     .map((r,i) => ({
       id: `${r[0]}-${r[1]}-${i}`,
       date: normalizeExcelDate(r[0]),
-      time: String(r[1]||""),
+      time: normalizeExcelTimeCell(r[1]),
       glucose: String(r[2]??"-"),
       carbs: String(r[3]??"0"),
       protein: String(r[4]??"0"),
