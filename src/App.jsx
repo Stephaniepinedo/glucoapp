@@ -405,25 +405,31 @@ const ensureSheet = async (fileId) => {
       );
     }
   }
-  // Ensure "Configuracion" sheet exists
-  let configSheet = wb.value?.find(s => s.name === "Configuracion");
-  if (!configSheet) {
-    await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Configuracion" });
-    await graphPatch(
-      `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1:C1')`,
-      { values:[["Fecha y hora", "Clave", "Valor"]] }
-    );
-  }
+  // Ensure "Configuracion" sheet exists — wrapped so a failure here
+  // (e.g. an already-damaged workbook) doesn't abort the whole connection.
+  try {
+    let configSheet = wb.value?.find(s => s.name === "Configuracion");
+    if (!configSheet) {
+      await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Configuracion" });
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1:C1')`,
+        { values:[["Fecha y hora", "Clave", "Valor"]] }
+      );
+    }
+  } catch {}
   // Ensure "Alimentos" sheet exists
-  let alimentosSheet = wb.value?.find(s => s.name === "Alimentos");
-  if (!alimentosSheet) {
-    await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Alimentos" });
-    await graphPatch(
-      `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1:B1')`,
-      { values:[["clave","valor"]] }
-    );
-  }
+  try {
+    let alimentosSheet = wb.value?.find(s => s.name === "Alimentos");
+    if (!alimentosSheet) {
+      await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Alimentos" });
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1:B1')`,
+        { values:[["clave","valor"]] }
+      );
+    }
+  } catch {}
   // Ensure "Peso" sheet exists
+  try {
   let pesoSheet = wb.value?.find(s => s.name === "Peso");
   if (!pesoSheet) {
     await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Peso" });
@@ -432,6 +438,7 @@ const ensureSheet = async (fileId) => {
       { values:[["Fecha","Peso (kg)"]] }
     );
   }
+  } catch {}
   return sheet;
 };
 // Save settings to OneDrive "Configuracion" sheet
