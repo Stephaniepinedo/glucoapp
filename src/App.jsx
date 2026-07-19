@@ -390,9 +390,14 @@ const ensureSheet = async (fileId) => {
       { values:[HEADER_ROW] }
     );
   } else {
+    // Check the actual value of A1 rather than usedRange — usedRange can
+    // report a sheet as "non-empty" due to formatting/dimension metadata
+    // even when no cell actually has text in it, which previously caused
+    // the header row to be silently skipped on freshly created files.
     try {
-      const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
-      if (!used.values || used.values.length===0) {
+      const a1 = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A1')`);
+      const a1Value = a1?.values?.[0]?.[0];
+      if (!a1Value) {
         await graphPatch(
           `/me/drive/items/${fileId}/workbook/worksheets/Registros/range(address='A1:I1')`,
           { values:[HEADER_ROW] }
