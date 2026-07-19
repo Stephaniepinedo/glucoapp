@@ -393,6 +393,63 @@ const graphPut = (url, body, contentType) => graphFetch(url, {
   body,
 });
 const HEADER_ROW = ["Fecha","Hora","Glucemia","Carbs","Proteina","Kcal","Insulina","Alimentos","Toujeo"];
+// ── Configuracion sheet: one column per setting (not a JSON blob) ──
+// Unmodified fields simply keep whatever value they already had, because
+// we always write the FULL current settings object — nothing is dropped.
+const SETTINGS_HEADER = [
+  "Sensibilidad","Hipoglucemia","Glucemia baja","Objetivo","Glucemia alta","Hiperglucemia",
+  "Sexo","Peso (kg)","Altura (cm)","Fecha nacimiento","Peso meta (kg)",
+  "Insulina rápida","Insulina lenta","Dosis insulina lenta (U)","Otros medicamentos",
+  "Meta carbs (g)","Meta proteína (g)","Meta calorías",
+  "Ratio Mañana desde","Ratio Mañana hasta","Ratio Mañana (g/U)",
+  "Ratio Tarde desde","Ratio Tarde hasta","Ratio Tarde (g/U)",
+  "Ratio Noche desde","Ratio Noche hasta","Ratio Noche (g/U)",
+];
+const settingsToRow = (s) => {
+  const r = (s.ratios && s.ratios.length===3) ? s.ratios : DEFAULT_SETTINGS.ratios;
+  return [
+    s.sensitivity, s.hipoglucemia, s.glucemiaBaja, s.objetivo, s.glucemiaAlta, s.hiperglucemia,
+    s.sexo, s.pesoKg, s.alturaCm, s.fechaNacimiento, s.pesoMeta,
+    s.insulinaRapida, s.insulinaLenta, s.toujeoDosis, (s.otrosMedicamentos||[]).join("; "),
+    s.metaCarbs, s.metaProtein, s.metaKcal,
+    r[0].from, r[0].to, r[0].ratio,
+    r[1].from, r[1].to, r[1].ratio,
+    r[2].from, r[2].to, r[2].ratio,
+  ];
+};
+const rowToSettings = (row) => {
+  const num = (v) => (v===undefined||v===null||v==="") ? undefined : Number(v);
+  const labels = ["🌅 Mañana","☀️ Tarde","🌙 Noche"];
+  const ratios = [0,1,2].map(i => ({
+    label: labels[i],
+    from: row[18+i*3] || DEFAULT_SETTINGS.ratios[i].from,
+    to:   row[19+i*3] || DEFAULT_SETTINGS.ratios[i].to,
+    ratio: num(row[20+i*3]) ?? DEFAULT_SETTINGS.ratios[i].ratio,
+  }));
+  return {
+    sensitivity: num(row[0]) ?? DEFAULT_SETTINGS.sensitivity,
+    hipoglucemia: num(row[1]) ?? DEFAULT_SETTINGS.hipoglucemia,
+    glucemiaBaja: num(row[2]) ?? DEFAULT_SETTINGS.glucemiaBaja,
+    objetivo: num(row[3]) ?? DEFAULT_SETTINGS.objetivo,
+    glucemiaAlta: num(row[4]) ?? DEFAULT_SETTINGS.glucemiaAlta,
+    hiperglucemia: num(row[5]) ?? DEFAULT_SETTINGS.hiperglucemia,
+    sexo: row[6] || DEFAULT_SETTINGS.sexo,
+    pesoKg: num(row[7]) ?? DEFAULT_SETTINGS.pesoKg,
+    alturaCm: num(row[8]) ?? DEFAULT_SETTINGS.alturaCm,
+    fechaNacimiento: row[9] || DEFAULT_SETTINGS.fechaNacimiento,
+    pesoMeta: num(row[10]) ?? DEFAULT_SETTINGS.pesoMeta,
+    insulinaRapida: row[11] || DEFAULT_SETTINGS.insulinaRapida,
+    insulinaLenta: row[12] || DEFAULT_SETTINGS.insulinaLenta,
+    toujeoDosis: num(row[13]) ?? DEFAULT_SETTINGS.toujeoDosis,
+    otrosMedicamentos: row[14] ? String(row[14]).split(";").map(x=>x.trim()).filter(Boolean) : DEFAULT_SETTINGS.otrosMedicamentos,
+    metaCarbs: num(row[15]) ?? DEFAULT_SETTINGS.metaCarbs,
+    metaProtein: num(row[16]) ?? DEFAULT_SETTINGS.metaProtein,
+    metaKcal: num(row[17]) ?? DEFAULT_SETTINGS.metaKcal,
+    ratios,
+  };
+};
+// ── Alimentos sheet: one row per food, one column per field ──
+const ALIMENTOS_HEADER = ["Nombre","Porción","Carbs (g)","Proteína (g)","Kcal","Categoría"];
 // Minimal valid empty .xlsx file, base64-encoded
 const EMPTY_XLSX_BASE64 = "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";
 const findOrCreateFile = async () => {
@@ -457,9 +514,34 @@ const ensureSheet = async (fileId) => {
     if (!configSheet) {
       await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Configuracion" });
       await graphPatch(
-        `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1:C1')`,
-        { values:[["Fecha y hora", "Clave", "Valor"]] }
+        `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1:AA1')`,
+        { values:[SETTINGS_HEADER] }
       );
+    } else {
+      // Migrate the old "Fecha y hora / Clave / Valor" (JSON blob) layout
+      // to the new one-column-per-setting layout, carrying over the most
+      // recent saved settings so nothing is lost.
+      const a1 = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1')`);
+      const a1Value = a1?.values?.[0]?.[0];
+      if (a1Value !== SETTINGS_HEADER[0]) {
+        let migrated = null;
+        try {
+          const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Configuracion/usedRange`);
+          const rows = used.values || [];
+          const settingsRows = rows.filter(r => r[1] === "settings" && r[2]);
+          if (settingsRows.length > 0) migrated = JSON.parse(settingsRows[settingsRows.length-1][2]);
+        } catch {}
+        await graphPatch(
+          `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A1:AA1')`,
+          { values:[SETTINGS_HEADER] }
+        );
+        if (migrated) {
+          await graphPatch(
+            `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A2:AA2')`,
+            { values:[settingsToRow({...DEFAULT_SETTINGS, ...migrated})] }
+          );
+        }
+      }
     }
   } catch {}
   // Ensure "Alimentos" sheet exists
@@ -468,9 +550,33 @@ const ensureSheet = async (fileId) => {
     if (!alimentosSheet) {
       await graphPost(`/me/drive/items/${fileId}/workbook/worksheets/add`, { name:"Alimentos" });
       await graphPatch(
-        `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1:B1')`,
-        { values:[["clave","valor"]] }
+        `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1:F1')`,
+        { values:[ALIMENTOS_HEADER] }
       );
+    } else {
+      // Migrate the old "clave/valor" (JSON blob) layout to one row per food.
+      const a1 = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1')`);
+      const a1Value = a1?.values?.[0]?.[0];
+      if (a1Value !== ALIMENTOS_HEADER[0]) {
+        let migrated = null;
+        try {
+          const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Alimentos/usedRange`);
+          const rows = used.values || [];
+          for (const row of rows) {
+            if (row[0] === "customFoods" && row[1]) { try { migrated = JSON.parse(row[1]); } catch {} break; }
+          }
+        } catch {}
+        await graphPatch(
+          `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A1:F1')`,
+          { values:[ALIMENTOS_HEADER] }
+        );
+        if (migrated && migrated.length > 0) {
+          await graphPatch(
+            `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A2:F${1+migrated.length}')`,
+            { values: migrated.map(f => [f.name, f.portion, f.carbs, f.protein, f.kcal, f.cat||"Personalizados"]) }
+          );
+        }
+      }
     }
   } catch {}
   // Ensure "Peso" sheet exists
@@ -486,45 +592,55 @@ const ensureSheet = async (fileId) => {
   } catch {}
   return sheet;
 };
-// Save settings to OneDrive "Configuracion" sheet
+// Save settings to OneDrive "Configuracion" sheet — updates row 2 IN PLACE,
+// one column per setting. We always write the full current settings object,
+// so any field the user didn't just change simply keeps its existing value.
 const saveSettingsToOneDrive = async (fileId, settings) => {
   try {
-    const json = JSON.stringify(settings);
-    const now = new Date();
-    const fecha = `${String(now.getDate()).padStart(2,"0")}/${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()}`;
-    const hora  = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-    // Get current used range to append after last row
-    let nextRow = 2;
-    try {
-      const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Configuracion/usedRange`);
-      nextRow = (used.values?.length || 1) + 1;
-    } catch {}
     await graphPatch(
-      `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A${nextRow}:C${nextRow}')`,
-      { values:[[fecha + " " + hora, "settings", json]] }
+      `/me/drive/items/${fileId}/workbook/worksheets/Configuracion/range(address='A2:AA2')`,
+      { values:[settingsToRow(settings)] }
     );
   } catch {}
 };
-// Load settings from OneDrive — takes the MOST RECENT row
+// Load settings from OneDrive — row 2 of the columnar layout
 const loadSettingsFromOneDrive = async (fileId) => {
   try {
     const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Configuracion/usedRange`);
-    const rows = (used.values || []).filter(r => r[1] === "settings" && r[2]);
-    if (rows.length === 0) return null;
-    // Last row is most recent
-    const lastRow = rows[rows.length - 1];
-    return JSON.parse(lastRow[2]);
+    const rows = used.values || [];
+    if (rows.length < 2) return null;
+    // Back-compat: old "Clave/Valor" layout stored full JSON snapshots
+    const oldRows = rows.filter(r => r[1] === "settings" && r[2]);
+    if (oldRows.length > 0) {
+      try { return JSON.parse(oldRows[oldRows.length-1][2]); } catch {}
+    }
+    return rowToSettings(rows[1]);
   } catch {}
   return null;
 };
-// Save custom foods to OneDrive "Alimentos" sheet
+// Save custom foods to OneDrive "Alimentos" sheet — one row per food.
 const saveCustomFoodsToOneDrive = async (fileId, foods) => {
   try {
-    const json = JSON.stringify(foods);
-    await graphPatch(
-      `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A2:B2')`,
-      { values:[["customFoods", json]] }
-    );
+    let prevRows = 0;
+    try {
+      const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Alimentos/usedRange`);
+      prevRows = Math.max((used.values?.length || 1) - 1, 0);
+    } catch {}
+    if (foods.length > 0) {
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A2:F${1+foods.length}')`,
+        { values: foods.map(f => [f.name, f.portion, f.carbs, f.protein, f.kcal, f.cat||"Personalizados"]) }
+      );
+    }
+    // Clear any leftover rows if the list got shorter
+    if (prevRows > foods.length) {
+      const clearCount = prevRows - foods.length;
+      const blank = Array.from({length:clearCount}, () => ["","","","","",""]);
+      await graphPatch(
+        `/me/drive/items/${fileId}/workbook/worksheets/Alimentos/range(address='A${2+foods.length}:F${1+prevRows}')`,
+        { values: blank }
+      );
+    }
   } catch {}
 };
 // Load custom foods from OneDrive "Alimentos" sheet
@@ -532,13 +648,41 @@ const loadCustomFoodsFromOneDrive = async (fileId) => {
   try {
     const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Alimentos/usedRange`);
     const rows = used.values || [];
+    // Back-compat: old single-blob format
     for (const row of rows) {
       if (row[0] === "customFoods" && row[1]) {
         return JSON.parse(row[1]);
       }
     }
+    // New columnar format: one row per food
+    const dataRows = rows.slice(1);
+    const foods = dataRows
+      .filter(r => r[0])
+      .map(r => ({
+        name: String(r[0]),
+        portion: String(r[1]??""),
+        carbs: Number(r[2])||0,
+        protein: Number(r[3])||0,
+        kcal: Number(r[4])||0,
+        cat: String(r[5]||"Personalizados"),
+      }));
+    return foods.length > 0 ? foods : null;
   } catch {}
   return null;
+};
+// Excel may store the "Fecha" cell either as plain text ("13/7/2026") or,
+// if the cell got auto-converted to a real date, as a serial number
+// (days since 1899-12-30, per Excel's date system). Normalize both to the
+// same "D/M/YYYY" (non-zero-padded) format the app uses everywhere else,
+// matching toLocaleDateString("es-CO").
+const normalizeExcelDate = (val) => {
+  if (val === null || val === undefined || val === "") return "";
+  if (typeof val === "number") {
+    const excelEpoch = Date.UTC(1899, 11, 30);
+    const d = new Date(excelEpoch + val * 86400000);
+    return `${d.getUTCDate()}/${d.getUTCMonth()+1}/${d.getUTCFullYear()}`;
+  }
+  return String(val);
 };
 const readAllRecords = async (fileId) => {
   const used = await graphGet(`/me/drive/items/${fileId}/workbook/worksheets/Registros/usedRange`);
@@ -549,7 +693,7 @@ const readAllRecords = async (fileId) => {
     .filter(r => r[0]) // must have a date
     .map((r,i) => ({
       id: `${r[0]}-${r[1]}-${i}`,
-      date: String(r[0]||""),
+      date: normalizeExcelDate(r[0]),
       time: String(r[1]||""),
       glucose: String(r[2]??"-"),
       carbs: String(r[3]??"0"),
@@ -1727,16 +1871,75 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                               </div>
                             );
                           })()}
-                          <div style={{borderTop:`1px solid ${C.border}`,marginTop:14,paddingTop:14}}>
-                            <ProgressBar label="Carbohidratos" value={last.carbs} meta={metaCarbs} color={C.sky} unit="g" />
-                            <ProgressBar label="Proteína" value={last.protein} meta={metaProtein} color={C.green} unit="g" />
-                            <ProgressBar label="Calorías" value={last.kcal} meta={metaKcal} color={C.orange} unit="" />
-                          </div>
                         </>
                       );
                     })()}
                   </div>
                   )}
+                  {/* Macros por día — 3 gráficas separadas (Carbs / Proteína / Calorías) */}
+                  {weeklyData.length > 0 && (() => {
+                    const today = new Date();
+                    const days7 = Array.from({length:7}, (_,i) => {
+                      const d = new Date(today);
+                      d.setDate(d.getDate() - (6-i));
+                      return {
+                        date: `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`,
+                        label: ["D","L","M","X","J","V","S"][d.getDay()],
+                        isToday: i===6,
+                      };
+                    });
+                    const dayMacros = {};
+                    for (const r of records) {
+                      if (!dayMacros[r.date]) dayMacros[r.date] = {carbs:0,protein:0,kcal:0};
+                      dayMacros[r.date].carbs   += parseFloat(r.carbs||0);
+                      dayMacros[r.date].protein += parseFloat(r.protein||0);
+                      dayMacros[r.date].kcal    += parseFloat(r.kcal||0);
+                    }
+                    const vals = days7.map(d => ({
+                      ...d,
+                      carbs:   Math.round(dayMacros[d.date]?.carbs||0),
+                      protein: Math.round(dayMacros[d.date]?.protein||0),
+                      kcal:    Math.round(dayMacros[d.date]?.kcal||0),
+                    }));
+                    const MacroChart = ({title, dataKey, color, meta, unit}) => {
+                      const maxVal = Math.max(...vals.map(v=>v[dataKey]), meta, 1);
+                      const chartH = 90;
+                      return (
+                        <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
+                          <div style={{fontSize:13,fontWeight:700,color,marginBottom:14}}>{title} — últimos 7 días</div>
+                          <div style={{position:"relative",height:chartH}}>
+                            <div style={{position:"absolute",left:0,right:0,bottom:`${Math.min((meta/maxVal)*100,100)}%`,borderTop:`1.5px dashed ${C.muted}`,zIndex:2}} />
+                            <div style={{display:"flex",alignItems:"flex-end",gap:6,height:"100%"}}>
+                              {vals.map((d,i) => (
+                                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%",justifyContent:"flex-end"}}>
+                                  <div title={`${d[dataKey]}${unit}`} style={{
+                                    width:"70%",
+                                    height: d[dataKey]>0 ? `${Math.max((d[dataKey]/maxVal)*100,4)}%` : "2px",
+                                    background: d.isToday ? color : color+"80",
+                                    borderRadius:"3px 3px 0 0",
+                                    transition:"height 0.4s"
+                                  }}/>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:6,marginTop:4}}>
+                            {vals.map((d,i) => (
+                              <div key={i} style={{flex:1,textAlign:"center",fontSize:9,color:d.isToday?color:C.muted,fontWeight:d.isToday?700:400}}>{d.label}</div>
+                            ))}
+                          </div>
+                          <div style={{fontSize:10,color:C.muted,marginTop:8}}>Meta: {meta}{unit}</div>
+                        </div>
+                      );
+                    };
+                    return (
+                      <>
+                        <MacroChart title="🍞 Carbohidratos" dataKey="carbs" color={C.sky} meta={metaCarbs} unit="g" />
+                        <MacroChart title="🍗 Proteína" dataKey="protein" color={C.green} meta={metaProtein} unit="g" />
+                        <MacroChart title="🔥 Calorías" dataKey="kcal" color={C.orange} meta={metaKcal} unit="" />
+                      </>
+                    );
+                  })()}
                   {/* Historial por semanas */}
                   {weeklyData.length > 1 && (
                     <div style={{background:C.card,borderRadius:16,padding:16,marginBottom:12}}>
