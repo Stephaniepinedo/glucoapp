@@ -1185,6 +1185,41 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
   const updateRatio = (i,key,val) => {
     setSettings(p => ({...p, ratios: p.ratios.map((r,idx) => idx===i ? {...r,[key]:val} : r)}));
   };
+  // Improve OCR accuracy on real phone photos of nutrition labels: upscale,
+  // grayscale, and boost contrast before handing the image to Tesseract.
+  // Low-contrast, small, glare-heavy label photos are the #1 cause of the
+  // "no se pudieron leer los valores" failure — this directly targets that.
+  const preprocessImage = (file) => new Promise((resolve) => {
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        try {
+          const scale = Math.max(1, 1400 / img.width);
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const d = imgData.data;
+          for (let i = 0; i < d.length; i += 4) {
+            const gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+            const contrasted = Math.min(255, Math.max(0, (gray - 128) * 1.5 + 128));
+            d[i] = d[i+1] = d[i+2] = contrasted;
+          }
+          ctx.putImageData(imgData, 0, 0);
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url);
+            resolve(blob || file);
+          }, "image/jpeg", 0.92);
+        } catch { URL.revokeObjectURL(url); resolve(file); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    } catch { resolve(file); }
+  });
   const scanLabel = async (file) => {
     if (!file) return;
     setScanning(true); setScanResult(null); setScanError("");
@@ -1195,13 +1230,17 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         setScanError("El escáner no está disponible. Ingresa los datos manualmente.");
         setScanning(false); return;
       }
-      const { data: { text } } = await Tesseract.recognize(file, "spa+eng", {
+      const ocrInput = await preprocessImage(file);
+      const { data: { text } } = await Tesseract.recognize(ocrInput, "spa+eng", {
         logger: () => {}
       });
       // Parse nutritional values from OCR text
       const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
       const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-      const fullText = normalize(text);
+      // Join lines with spaces (not the raw text) so a keyword phrase that
+      // got OCR'd/wrapped across two lines — e.g. "Carbohidratos" / "totales"
+      // on separate lines — is still found as one contiguous phrase.
+      const fullText = normalize(lines.join(" "));
       // Helper: find number after keyword
       const findVal = (keywords) => {
         for (const kw of keywords) {
@@ -1236,9 +1275,9 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
         }
         return "Producto escaneado";
       };
-      const carbs   = findVal(["carbohidratos totales","total carbohydrates","carbohidratos","carbohydrate","hidratos"]);
-      const protein = findVal(["proteina","proteína","protein"]);
-      const kcal    = findVal(["calorias","calorías","calories","kcal","energy"]);
+      const carbs   = findVal(["carbohidratos totales","total carbohydrates","total carbohydrate","carbohidratos","carbohidrato","carbohydrate","hidratos de carbono","hidratos"]);
+      const protein = findVal(["proteinas","proteínas","proteina","proteína","protein"]);
+      const kcal    = findVal(["valor energetico","valor energético","calorias","calorías","calories","kcal","energia","energía","energy"]);
       const portion = findPortion();
       const name    = findName();
       if (carbs === 0 && protein === 0 && kcal === 0) {
@@ -1702,7 +1741,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                   const d = new Date(today);
                   d.setDate(d.getDate() - (4-i));
                   return {
-                    date: `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`,
+                    date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`,
                     label: ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()],
                     isToday: i===4,
                   };
@@ -1805,7 +1844,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                               const d = new Date(today);
                               d.setDate(d.getDate() - (6-i));
                               return {
-                                date: `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`,
+                                date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`,
                                 label: ["D","L","M","X","J","V","S"][d.getDay()],
                                 isToday: i===6,
                               };
@@ -1883,7 +1922,7 @@ function App({ msToken, setMsToken, userInfo, onLogout }) {
                       const d = new Date(today);
                       d.setDate(d.getDate() - (6-i));
                       return {
-                        date: `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`,
+                        date: `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`,
                         label: ["D","L","M","X","J","V","S"][d.getDay()],
                         isToday: i===6,
                       };
